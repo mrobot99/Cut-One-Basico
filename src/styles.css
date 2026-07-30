@@ -1,0 +1,161 @@
+@import 'primeicons/primeicons.css';
+
+/* RF-G01 §5 RN-03: cero color literal. Todo sale de los tokens que PrimeNG inyecta como variables CSS
+   a partir del tema activo, así que cambiar `themeKey` cambia también esta hoja.
+
+   `light-dark()` es el mismo mecanismo que usa Aura internamente: PrimeNG emite `color-scheme: light`
+   en `:root` y `color-scheme: dark` bajo la clase de modo oscuro, y estas variables lo siguen solas.
+   Un `#0a0a0a` escrito a mano aquí sobreviviría al cambio de tema y produciría el peor resultado
+   posible: una página medio migrada. */
+:root {
+  --cob-page-bg: light-dark(var(--p-surface-50), var(--p-surface-950));
+  --cob-panel-bg: light-dark(var(--p-surface-0), var(--p-surface-900));
+  --cob-alt-bg: light-dark(var(--p-surface-100), var(--p-surface-900));
+  --cob-border: light-dark(var(--p-surface-200), var(--p-surface-700));
+  --cob-text: var(--p-text-color);
+  --cob-text-muted: var(--p-text-muted-color);
+  --cob-accent: var(--p-primary-color);
+  --cob-radius: var(--p-border-radius-lg, 0.75rem);
+  --cob-container: 1180px;
+  --cob-section-gap: clamp(3rem, 7vw, 5.5rem);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--cob-page-bg);
+  color: var(--cob-text);
+  font-family: var(--p-font-family, system-ui, -apple-system, 'Segoe UI', sans-serif);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  /* Ninguna sección puede provocar scroll horizontal (RF-G03 CA-10). */
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+}
+
+.cob-container {
+  width: 100%;
+  max-width: var(--cob-container);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+}
+
+/* Cada sección tiene que aguantar que la de arriba o la de abajo no exista (RF-G03 §5 RN-02): el
+   fondo se declara por sección, nunca se hereda de la vecina. */
+.cob-section {
+  padding-block: var(--cob-section-gap);
+}
+
+.cob-section--alt {
+  background: var(--cob-alt-bg);
+}
+
+.cob-section__head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  align-items: center;
+}
+
+.cob-eyebrow {
+  color: var(--cob-accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cob-title {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.cob-subtitle {
+  color: var(--cob-text-muted);
+  max-width: 46ch;
+}
+
+.cob-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+}
+
+.cob-muted {
+  color: var(--cob-text-muted);
+}
+
+.cob-media {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--cob-alt-bg);
+  border-radius: var(--cob-radius);
+}
+
+.cob-media--square {
+  aspect-ratio: 1 / 1;
+}
+
+/* Hueco de una imagen que no cargó o que el tenant no configuró: la tarjeta no puede colapsar
+   (RF-G03 §5 RN-05). */
+.cob-media--empty {
+  display: grid;
+  place-items: center;
+  color: var(--cob-text-muted);
+  border: 1px dashed var(--cob-border);
+}
+
+/* Correcciones puntuales sobre el DOM interno de PrimeNG. Van aquí y no en el CSS del componente porque
+   estos elementos los renderiza la librería y no llevan el atributo de encapsulación. */
+
+/* `p-motion` envuelve el contenido de cada paso en un grid item, y un grid item tiene `min-width: auto`:
+   cualquier hijo con scroll horizontal —la tira de 30 días del paso 3— estira el diálogo entero en vez
+   de desplazarse dentro de su propia caja. `min-width: 0` es la corrección estándar de ese
+   comportamiento del grid. */
+.p-steppanel-content-wrapper,
+.p-steppanel-content {
+  min-width: 0;
+}
+
+.cob-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

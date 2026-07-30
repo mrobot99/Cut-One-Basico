@@ -1,0 +1,53 @@
+<section class="cob-section" id="nosotros">
+  <div class="cob-container about">
+    <div class="about__text">
+      <span class="cob-eyebrow">Nuestra historia</span>
+
+      @if (branding().about_us_title) {
+        <h2 class="cob-title">{{ branding().about_us_title }}</h2>
+      }
+
+      @if (branding().about_us_text) {
+        <p class="about__body cob-muted">{{ branding().about_us_text }}</p>
+      }
+
+      @if (branding().est_year || branding().location) {
+        <dl class="about__facts">
+          @if (branding().est_year) {
+            <div>
+              <dt class="cob-muted">Años de tradición</dt>
+              <dd>Desde {{ branding().est_year }}</dd>
+            </div>
+          }
+          @if (branding().location) {
+            <div>
+              <dt class="cob-muted">Ubicación física</dt>
+              <dd>{{ branding().location }}</dd>
+            </div>
+          }
+        </dl>
+      }
+    </div>
+
+    @if (gallery().length > 0) {
+      <div class="about__gallery">
+        <p-galleria
+          [value]="gallery()"
+          [numVisible]="4"
+          [responsiveOptions]="responsiveOptions"
+          [showItemNavigators]="true"
+          [showThumbnails]="gallery().length > 1"
+          [circular]="true"
+          [containerStyle]="{ 'max-width': '100%' }"
+        >
+          <ng-template #item let-item>
+            <img class="about__image" [src]="item.src" [alt]="item.alt" loading="lazy" />
+          </ng-template>
+          <ng-template #thumbnail let-item>
+            <img class="about__thumb" [src]="item.src" [alt]="item.alt" loading="lazy" />
+          </ng-template>
+        </p-galleria>
+      </div>
+    }
+  </div>
+</section>

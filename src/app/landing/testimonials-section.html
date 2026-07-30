@@ -1,0 +1,42 @@
+<section class="cob-section cob-section--alt">
+  <div class="cob-container">
+    <div class="cob-section__head">
+      <span class="cob-eyebrow">Opiniones de clientes</span>
+      <h2 class="cob-title">Experiencias reales</h2>
+      <!-- El patrón correcto cuando hay que mezclar rótulo genérico y dato del tenant: la plantilla es
+           genérica, el dato viene del API (RF-G03 §5 RN-01). -->
+      <p class="cob-subtitle">
+        @if (shopName()) {
+          Lo que cuentan quienes ya pasaron por {{ shopName() }}.
+        } @else {
+          Lo que cuentan quienes ya nos visitaron.
+        }
+      </p>
+    </div>
+
+    <p-carousel
+      [value]="testimonials()"
+      [numVisible]="3"
+      [numScroll]="1"
+      [responsiveOptions]="responsiveOptions"
+      [circular]="testimonials().length > 3"
+      [showIndicators]="false"
+    >
+      <ng-template #item let-testimonial>
+        <article class="quote">
+          <!-- Sin fecha: `PublicTestimonial` no la tiene (decisión 9). El "Hace 2 días" del mockup
+               estaba inventado. -->
+          <p-rating [ngModel]="testimonial.rating" [readonly]="true" [stars]="5" />
+          <p class="quote__text">{{ testimonial.text }}</p>
+          <footer class="quote__author">{{ testimonial.authorName }}</footer>
+        </article>
+      </ng-template>
+    </p-carousel>
+
+    @if (canLoadMore()) {
+      <div class="more">
+        <p-button label="Ver más opiniones" [text]="true" (onClick)="loadMore.emit()" />
+      </div>
+    }
+  </div>
+</section>

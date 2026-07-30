@@ -1,0 +1,8 @@
+{
+  "/api": {
+    "target": "https://1w1n64683b.execute-api.us-east-1.amazonaws.com",
+    "secure": true,
+    "changeOrigin": true,
+    "logLevel": "warn"
+  }
+}

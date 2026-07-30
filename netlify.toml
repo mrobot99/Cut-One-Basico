@@ -1,0 +1,37 @@
+# RF-G01 §5 RN-04. El redirect SPA vive en `public/_redirects` (el bundler copia `public/` tal cual al
+# artefacto), igual que en `pz-personalizado`. Sin él, entrar directo o recargar en `/encuesta/{id}` —que
+# es LA ÚNICA forma de llegar a esa ruta, desde un link de correo— devuelve 404.
+#
+# Aquí quedan solo las cabeceras de caché. `index.html` no se puede cachear: es el documento que
+# arranca la app y el que apunta a los bundles con hash.
+
+[build]
+  command = "npm run build"
+  publish = "dist/cut-one-basic/browser"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Los bundles llevan hash en el nombre (`outputHashing: all`), así que son inmutables.
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Las imágenes semilla NO llevan hash (viven en `public/`), así que no pueden ser inmutables.
+[[headers]]
+  for = "/seed/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

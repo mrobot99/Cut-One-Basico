@@ -1,0 +1,28 @@
+<header class="header">
+  <div class="cob-container header__inner">
+    <a class="brand" href="#top">
+      @if (logo(); as src) {
+        <img class="brand__logo" [src]="src" [alt]="branding().shop_name || 'Logo'" />
+      }
+      <span class="brand__text">
+        @if (branding().shop_name) {
+          <strong class="brand__name">{{ branding().shop_name }}</strong>
+        }
+        @if (branding().slogan) {
+          <span class="brand__slogan cob-muted">{{ branding().slogan }}</span>
+        } @else if (branding().est_year) {
+          <span class="brand__slogan cob-muted">Desde {{ branding().est_year }}</span>
+        }
+      </span>
+    </a>
+
+    <nav class="nav" aria-label="Secciones">
+      <a href="#servicios">Servicios</a>
+      <a href="#barberos">Barberos</a>
+      <a href="#nosotros">Sobre Nosotros</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+
+    <p-button label="Reservar Cita" icon="pi pi-calendar-plus" (onClick)="book.emit()" />
+  </div>
+</header>

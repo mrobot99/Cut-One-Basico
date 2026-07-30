@@ -1,0 +1,42 @@
+<cob-site-header [branding]="branding()" (book)="openWizard()" />
+
+<main>
+  <cob-hero-section
+    [branding]="branding()"
+    [showRating]="showTestimonials()"
+    (book)="openWizard()"
+  />
+
+  <cob-services-section
+    [services]="services()"
+    [loading]="catalogLoading()"
+    [failed]="catalogFailed()"
+    (serviceSelected)="bookService($event)"
+  />
+
+  <cob-barbers-section
+    [barbers]="barbers()"
+    [loading]="catalogLoading()"
+    [failed]="catalogFailed()"
+    (barberSelected)="bookBarber($event)"
+  />
+
+  <!-- Una sección sin dato no se pinta (RF-G03 §5 RN-02). Cada una declara su propio fondo, así que
+       ninguna asume la posición ni el fondo de su vecina. -->
+  @if (showAbout()) {
+    <cob-about-section [branding]="branding()" />
+  }
+
+  @if (showTestimonials()) {
+    <cob-testimonials-section
+      [testimonials]="testimonials()"
+      [shopName]="branding().shop_name"
+      [canLoadMore]="canLoadMoreTestimonials()"
+      (loadMore)="loadMoreTestimonials()"
+    />
+  }
+</main>
+
+<cob-site-footer [branding]="branding()" />
+
+<cob-booking-wizard [services]="services()" [barbers]="barbers()" />

@@ -1,0 +1,62 @@
+<footer class="footer" id="contacto">
+  <div class="cob-container footer__inner">
+    <div class="footer__brand">
+      @if (logo(); as src) {
+        <img class="footer__logo" [src]="src" [alt]="branding().shop_name || 'Logo'" />
+      }
+      @if (branding().shop_name) {
+        <strong>{{ branding().shop_name }}</strong>
+      }
+      @if (branding().est_year) {
+        <span class="cob-muted">Desde {{ branding().est_year }}</span>
+      }
+      @if (branding().slogan) {
+        <p class="cob-muted footer__slogan">{{ branding().slogan }}</p>
+      }
+    </div>
+
+    <nav class="footer__nav" aria-label="Navegación">
+      <h3 class="footer__heading">Navegación</h3>
+      <a href="#servicios">Servicios</a>
+      <a href="#barberos">Barberos</a>
+      <a href="#nosotros">Sobre Nosotros</a>
+    </nav>
+
+    <div class="footer__contact">
+      <h3 class="footer__heading">Contacto y horarios</h3>
+
+      @if (branding().location) {
+        <p><i class="pi pi-map-marker" aria-hidden="true"></i> {{ branding().location }}</p>
+      }
+      @if (branding().schedule) {
+        <p><i class="pi pi-clock" aria-hidden="true"></i> {{ branding().schedule }}</p>
+      }
+      <!-- RF-G03 §5 RN-02: un enlace de contacto sin dato no se pinta. -->
+      @if (phoneUrl(); as href) {
+        <p><a [href]="href"><i class="pi pi-phone" aria-hidden="true"></i> {{ branding().public_phone }}</a></p>
+      }
+      @if (whatsappUrl(); as href) {
+        <p>
+          <a [href]="href" target="_blank" rel="noopener">
+            <i class="pi pi-whatsapp" aria-hidden="true"></i> WhatsApp
+          </a>
+        </p>
+      }
+      @if (branding().instagram_url) {
+        <p>
+          <a [href]="branding().instagram_url" target="_blank" rel="noopener">
+            <i class="pi pi-instagram" aria-hidden="true"></i> Instagram
+          </a>
+        </p>
+      }
+    </div>
+  </div>
+
+  <div class="cob-container footer__legal cob-muted">
+    @if (branding().shop_name) {
+      <span>© {{ currentYear }} {{ branding().shop_name }}. Todos los derechos reservados.</span>
+    } @else {
+      <span>© {{ currentYear }}. Todos los derechos reservados.</span>
+    }
+  </div>
+</footer>

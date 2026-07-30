@@ -1,0 +1,56 @@
+<section class="hero" id="top">
+  @if (image(); as src) {
+    <img class="hero__image" [src]="src" alt="" fetchpriority="high" />
+  }
+  <div class="hero__scrim"></div>
+
+  <div class="cob-container hero__content">
+    <span class="hero__badge">
+      <i class="pi pi-check-circle" aria-hidden="true"></i>
+      Reserva online disponible
+    </span>
+
+    @if (title()) {
+      <h1 class="hero__title">{{ title() }}</h1>
+    }
+
+    @if (branding().hero_subtitle) {
+      <p class="hero__subtitle">{{ branding().hero_subtitle }}</p>
+    }
+
+    @if (showRating()) {
+      <div class="hero__rating">
+        <p-rating [ngModel]="branding().rating_score" [readonly]="true" [stars]="5" />
+        <span class="cob-muted">{{ branding().rating_score }} / 5</span>
+      </div>
+    }
+
+    <div class="hero__actions">
+      <p-button label="Reservar mi cita ahora" icon="pi pi-calendar-plus" size="large" (onClick)="book.emit()" />
+      <a class="hero__link" href="#servicios">Ver servicios y precios</a>
+    </div>
+
+    @if (branding().location || branding().schedule || branding().est_year) {
+      <dl class="hero__facts">
+        @if (branding().location) {
+          <div class="hero__fact">
+            <dt><i class="pi pi-map-marker" aria-hidden="true"></i> Ubicación</dt>
+            <dd>{{ branding().location }}</dd>
+          </div>
+        }
+        @if (branding().schedule) {
+          <div class="hero__fact">
+            <dt><i class="pi pi-clock" aria-hidden="true"></i> Horario</dt>
+            <dd>{{ branding().schedule }}</dd>
+          </div>
+        }
+        @if (branding().est_year) {
+          <div class="hero__fact">
+            <dt><i class="pi pi-star" aria-hidden="true"></i> Experiencia</dt>
+            <dd>Desde {{ branding().est_year }}</dd>
+          </div>
+        }
+      </dl>
+    }
+  </div>
+</section>

@@ -1,0 +1,33 @@
+.barber-card__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.barber-card__photo {
+  width: 7rem;
+  height: 7rem;
+  object-fit: cover;
+  border-radius: 999px;
+  border: 2px solid var(--cob-border);
+}
+
+.barber-card__name {
+  font-size: 1.125rem;
+}
+
+.barber-card__specialty {
+  color: var(--cob-accent);
+  font-size: 0.8125rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}

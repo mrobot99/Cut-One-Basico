@@ -1,0 +1,89 @@
+<section class="cob-section" id="servicios">
+  <div class="cob-container">
+    <div class="cob-section__head">
+      <span class="cob-eyebrow">Nuestros servicios</span>
+      <h2 class="cob-title">Catálogo de servicios</h2>
+      <p class="cob-subtitle">Elige el servicio que buscas y reserva en menos de un minuto.</p>
+    </div>
+
+    @if (chips().length > 0) {
+      <div class="filters">
+        <p-selectButton
+          [options]="chips()"
+          optionLabel="label"
+          optionValue="key"
+          [allowEmpty]="false"
+          [ngModel]="activeChip()"
+          (ngModelChange)="activeChip.set($event)"
+          ariaLabelledBy="filtros-servicios"
+        />
+        <span class="cob-visually-hidden" id="filtros-servicios">Filtrar servicios</span>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="cob-grid">
+        @for (placeholder of placeholders; track placeholder) {
+          <div class="skeleton-card">
+            <p-skeleton height="12rem" borderRadius="0.75rem" />
+            <p-skeleton width="60%" height="1.25rem" />
+            <p-skeleton width="40%" />
+          </div>
+        }
+      </div>
+    } @else if (failed()) {
+      <!-- RF-G03 §5 RN-02: servicios y barberos NO se ocultan cuando no hay dato — alimentan el
+           wizard, y esconderlos dejaría un botón "Reservar" que no lleva a nada. -->
+      <p-message severity="warn" text="No pudimos cargar los servicios. Vuelve a intentarlo en un momento." />
+    } @else if (visible().length === 0) {
+      <p-message severity="info" text="Todavía no hay servicios publicados." />
+    } @else {
+      <div class="cob-grid">
+        @for (service of visible(); track service.id) {
+          <p-card styleClass="service-card">
+            <ng-template #header>
+              <div class="service-card__media">
+                @if (image(service); as src) {
+                  <img class="cob-media" [src]="src" [alt]="service.name" loading="lazy" />
+                } @else {
+                  <div class="cob-media cob-media--empty">
+                    <i class="pi pi-image" aria-hidden="true"></i>
+                  </div>
+                }
+                @if (service.isPopular) {
+                  <p-tag class="service-card__badge" value="Popular" icon="pi pi-star-fill" />
+                }
+              </div>
+            </ng-template>
+
+            <div class="service-card__body">
+              <div class="service-card__meta">
+                <span><i class="pi pi-clock" aria-hidden="true"></i> {{ service.durationMin }} min</span>
+                @if (service.category) {
+                  <span class="service-card__category">{{ service.category }}</span>
+                }
+              </div>
+
+              <h3 class="service-card__name">{{ service.name }}</h3>
+              <strong class="service-card__price">{{ formatPrice(service.price) }}</strong>
+
+              @if (service.description) {
+                <p class="cob-muted service-card__description">{{ service.description }}</p>
+              }
+            </div>
+
+            <ng-template #footer>
+              <p-button
+                label="Reservar este servicio"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                [fluid]="true"
+                (onClick)="serviceSelected.emit(service)"
+              />
+            </ng-template>
+          </p-card>
+        }
+      </div>
+    }
+  </div>
+</section>

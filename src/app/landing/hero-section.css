@@ -1,0 +1,114 @@
+.hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  min-height: min(38rem, 82vh);
+  padding-block: clamp(3rem, 8vw, 6rem);
+  background: var(--cob-alt-bg);
+  overflow: hidden;
+}
+
+/* La imagen del hero es lo primero que se ve: no lleva lazy loading. */
+.hero__image,
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.hero__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Degradado de legibilidad: el texto va sobre una imagen que sube el tenant y que puede ser
+   cualquier cosa. */
+.hero__scrim {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--cob-page-bg) 92%, transparent),
+    color-mix(in srgb, var(--cob-page-bg) 55%, transparent)
+  );
+}
+
+.hero__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25rem;
+  max-width: 46rem;
+}
+
+.hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--cob-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cob-panel-bg) 70%, transparent);
+  color: var(--cob-accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.hero__title {
+  font-size: clamp(2.25rem, 7vw, 4rem);
+  letter-spacing: -0.02em;
+}
+
+.hero__subtitle {
+  font-size: clamp(1rem, 2.2vw, 1.25rem);
+  color: var(--cob-text-muted);
+  max-width: 38rem;
+}
+
+.hero__rating {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hero__link {
+  color: var(--cob-accent);
+  font-weight: 600;
+  border-bottom: 1px solid transparent;
+}
+
+.hero__link:hover {
+  border-bottom-color: currentColor;
+}
+
+.hero__facts {
+  display: grid;
+  gap: 1rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), auto));
+  margin: 0.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--cob-border);
+  width: 100%;
+}
+
+.hero__fact dt {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cob-text-muted);
+}
+
+.hero__fact dd {
+  margin: 0.125rem 0 0;
+  font-weight: 600;
+}

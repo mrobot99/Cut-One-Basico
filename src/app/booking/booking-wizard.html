@@ -1,0 +1,234 @@
+<p-dialog
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [dismissableMask]="false"
+  [style]="{ width: 'min(56rem, 94vw)' }"
+  header="Reservar cita"
+>
+  @if (created(); as appointment) {
+    <div class="done">
+      <i class="pi pi-check-circle done__icon" aria-hidden="true"></i>
+      <h3 class="cob-title">¡Tu cita quedó agendada!</h3>
+
+      <p class="done__code">
+        Código de confirmación
+        <strong>{{ appointment.confirmationCode }}</strong>
+      </p>
+
+      <dl class="summary">
+        <div><dt class="cob-muted">Servicio</dt><dd>{{ appointment.serviceName }}</dd></div>
+        <div><dt class="cob-muted">Profesional</dt><dd>{{ appointment.barberName }}</dd></div>
+        <div><dt class="cob-muted">Fecha</dt><dd>{{ formatDate(appointment.date) }}</dd></div>
+        <div>
+          <dt class="cob-muted">Hora</dt>
+          <dd>{{ appointment.startTime.slice(0, 5) }} · {{ appointment.durationMin }} min</dd>
+        </div>
+      </dl>
+
+      <!-- Este aviso solo es cierto porque el correo es obligatorio (§5 RN-04). -->
+      <p class="cob-muted">Te enviamos los detalles al correo que indicaste.</p>
+
+      <p-button label="Listo" (onClick)="close()" />
+    </div>
+  } @else {
+    <p-stepper [(value)]="step" [linear]="false" styleClass="wizard">
+      <p-step-list>
+        <p-step [value]="1">Servicio</p-step>
+        <p-step [value]="2" [disabled]="step() < 2">Barbero</p-step>
+        <p-step [value]="3" [disabled]="step() < 3">Horario</p-step>
+        <p-step [value]="4" [disabled]="step() < 4">Tus datos</p-step>
+      </p-step-list>
+
+      <p-step-panels>
+        <!-- Paso 1 — Servicio -->
+        <p-step-panel [value]="1">
+          <ng-template #content>
+            @if (services().length === 0) {
+              <p-message severity="info" text="Este negocio todavía no publicó servicios." />
+            } @else {
+              <div class="options">
+                @for (option of services(); track option.id) {
+                  <button
+                    type="button"
+                    class="option"
+                    [class.option--active]="service()?.id === option.id"
+                    (click)="chooseService(option)"
+                  >
+                    @if (image(option.imageUrl); as src) {
+                      <img class="option__thumb" [src]="src" [alt]="option.name" loading="lazy" />
+                    }
+                    <span class="option__text">
+                      <strong>{{ option.name }}</strong>
+                      <span class="cob-muted">{{ option.durationMin }} min</span>
+                    </span>
+                    <strong class="option__price">{{ formatPrice(option.price) }}</strong>
+                  </button>
+                }
+              </div>
+            }
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Paso 2 — Barbero -->
+        <p-step-panel [value]="2">
+          <ng-template #content>
+            @if (barbers().length === 0) {
+              <p-message severity="info" text="Este negocio todavía no publicó profesionales." />
+            } @else {
+              <div class="options">
+                @for (option of barbers(); track option.id) {
+                  <button
+                    type="button"
+                    class="option"
+                    [class.option--active]="barber()?.id === option.id"
+                    (click)="chooseBarber(option)"
+                  >
+                    @if (image(option.photoUrl); as src) {
+                      <img class="option__avatar" [src]="src" [alt]="barberName(option)" loading="lazy" />
+                    }
+                    <span class="option__text">
+                      <strong>{{ barberName(option) }}</strong>
+                      @if (option.specialty) {
+                        <span class="cob-muted">{{ option.specialty }}</span>
+                      }
+                    </span>
+                  </button>
+                }
+              </div>
+            }
+
+            <div class="nav">
+              <p-button label="Atrás" [text]="true" icon="pi pi-arrow-left" (onClick)="back()" />
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Paso 3 — Horario -->
+        <p-step-panel [value]="3">
+          <ng-template #content>
+            <div class="days" role="group" aria-label="Elige el día">
+              @for (day of days(); track day) {
+                <button
+                  type="button"
+                  class="day"
+                  [class.day--active]="date() === day"
+                  (click)="chooseDate(day)"
+                >
+                  <span class="day__weekday">{{ labelsFor(day).weekday }}</span>
+                  <span class="day__number">{{ labelsFor(day).day }}</span>
+                  <span class="day__month">{{ labelsFor(day).month }}</span>
+                </button>
+              }
+            </div>
+
+            @if (slotsLoading()) {
+              <div class="slots-loading">
+                <p-progressSpinner [style]="{ width: '2.5rem', height: '2.5rem' }" />
+              </div>
+            } @else if (slotsFailed()) {
+              <p-message severity="warn" text="No pudimos consultar la disponibilidad. Intenta de nuevo." />
+            } @else if (slotsState() === 'no-shift') {
+              <!-- Tres estados vacíos con tres causas distintas (§4 RN-03). -->
+              <p-message severity="info" text="Este profesional no atiende ese día. Prueba con otra fecha." />
+            } @else if (slotsState() === 'full') {
+              <p-message severity="info" text="Ese día está completo. Prueba con otra fecha." />
+            } @else {
+              <div class="slots">
+                @for (slot of slots(); track slot.startTime) {
+                  <button
+                    type="button"
+                    class="slot"
+                    [class.slot--taken]="!slot.available"
+                    [disabled]="!slot.available"
+                    (click)="chooseTime(slot)"
+                  >
+                    {{ slot.label }}
+                  </button>
+                }
+              </div>
+            }
+
+            <div class="nav">
+              <p-button label="Atrás" [text]="true" icon="pi pi-arrow-left" (onClick)="back()" />
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <!-- Paso 4 — Tus datos -->
+        <p-step-panel [value]="4">
+          <ng-template #content>
+            <div class="checkout">
+              <form class="form" [formGroup]="form" (ngSubmit)="confirm()">
+                <p-floatlabel variant="on">
+                  <input pInputText id="fullName" formControlName="fullName" maxlength="120" autocomplete="name" />
+                  <label for="fullName">Nombre completo *</label>
+                </p-floatlabel>
+                @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+                  <p-message severity="error" variant="simple" size="small" text="Necesitamos tu nombre." />
+                }
+
+                <p-floatlabel variant="on">
+                  <input pInputText id="email" type="email" formControlName="email" maxlength="160" autocomplete="email" />
+                  <label for="email">Correo electrónico *</label>
+                </p-floatlabel>
+                @if (form.controls.email.touched && form.controls.email.invalid) {
+                  <p-message
+                    severity="error"
+                    variant="simple"
+                    size="small"
+                    text="Necesitamos un correo válido: es donde llega la confirmación."
+                  />
+                }
+
+                <p-floatlabel variant="on">
+                  <input pInputText id="phone" formControlName="phone" maxlength="30" autocomplete="tel" />
+                  <label for="phone">Teléfono (opcional)</label>
+                </p-floatlabel>
+
+                <p-floatlabel variant="on">
+                  <textarea pTextarea id="notes" formControlName="notes" maxlength="500" rows="3"></textarea>
+                  <label for="notes">Notas (opcional)</label>
+                </p-floatlabel>
+
+                <div class="nav nav--split">
+                  <p-button label="Atrás" [text]="true" icon="pi pi-arrow-left" (onClick)="back()" />
+                  <p-button
+                    type="submit"
+                    label="Confirmar reserva"
+                    icon="pi pi-check"
+                    [loading]="submitting()"
+                    [disabled]="submitting()"
+                  />
+                </div>
+              </form>
+
+              <aside class="recap">
+                <h4 class="recap__title">Tu reserva</h4>
+                <dl class="summary">
+                  @if (service(); as chosen) {
+                    <div><dt class="cob-muted">Servicio</dt><dd>{{ chosen.name }}</dd></div>
+                  }
+                  @if (barber(); as chosen) {
+                    <div><dt class="cob-muted">Profesional</dt><dd>{{ barberName(chosen) }}</dd></div>
+                  }
+                  <div><dt class="cob-muted">Fecha</dt><dd>{{ formatDate(date()) }}</dd></div>
+                  @if (time(); as chosen) {
+                    <div><dt class="cob-muted">Hora</dt><dd>{{ chosen.slice(0, 5) }}</dd></div>
+                  }
+                </dl>
+
+                @if (service(); as chosen) {
+                  <p class="recap__total">
+                    <span class="cob-muted">Total</span>
+                    <strong>{{ formatPrice(chosen.price) }}</strong>
+                  </p>
+                }
+              </aside>
+            </div>
+          </ng-template>
+        </p-step-panel>
+      </p-step-panels>
+    </p-stepper>
+  }
+</p-dialog>
