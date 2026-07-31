@@ -30,7 +30,11 @@ npm ci
 
 npm start            # dev server en http://localhost:8082, proxy al backend LOCAL (:58114)
 npm run start:staging  # igual, pero el proxy apunta al API de staging
-npm run build        # build desplegable (configuración production)
+npm run start:clasico  # tema clasico en :8083  ┐ para comparar los tres temas a la vez,
+npm run start:minimal  # tema minimal en :8084  ┘ cada uno en su pestaña
+npm run build        # = build:production (defaultConfiguration del CLI)
+npm run build:staging     # build desplegable, API de staging
+npm run build:production  # build desplegable, API de "producción" — hoy el mismo de staging, ver abajo
 npm run build:dev    # build sin optimizar, útil para inspeccionar el bundle
 npm test             # tests de lógica
 npm run lint
@@ -50,15 +54,29 @@ Angular no lee archivos `.env`. La configuración vive en `src/environments/`, i
 | Archivo | Cuándo | `production` | `apiUrl` | `devSubdomain` |
 |---|---|---|---|---|
 | `environment.ts` | `npm start`, `start:staging`, tests | `false` | `''` (proxy) | `cut-test` |
-| `environment.production.ts` | `npm run build` | `true` | API de staging | `''` |
+| `environment.staging.ts` | `npm run build:staging` | `true` | API de staging | `''` |
+| `environment.production.ts` | `npm run build` / `build:production` | `true` | API de staging (hoy) | `''` |
+| `environment.clasico.ts` | `npm run start:clasico` | `false` | `''` (proxy) | `cut-test` |
+| `environment.minimal.ts` | `npm run start:minimal` | `false` | `''` (proxy) | `cut-test` |
+
+**`environment.staging.ts` y `environment.production.ts` son dos archivos a propósito, aunque hoy
+tengan el mismo `apiUrl`.** El backend no tiene todavía un API de producción real
+(`appsettings.Production.json` está vacío — Staging es el único ambiente funcional del proyecto). Se
+separan desde ahora para que, el día que exista un API de producción real, cambiar a él sea editar una
+URL en un archivo que ya existe y no una migración de configuración. Mientras tanto, desplegar
+`build:production` en vez de `build:staging` no es un error: sirven exactamente lo mismo.
 
 `themeKey` es el cuarto campo y está **tipado contra el catálogo de temas**: un valor mal escrito rompe
 el build en vez de caer en silencio en un tema por defecto.
 
-Las tres configuraciones del CLI son `development`, `staging` y `production`. `staging` es una
-configuración **de `serve`**, no de build: se diferencia de `development` únicamente en a dónde apunta el
-proxy (`proxy.staging.conf.json` en vez de `proxy.conf.json`), porque no hay dos APIs desplegados que
-distinguir.
+Los dos últimos archivos existen **solo para comparar temas en local**: son copias del de desarrollo con
+otro `themeKey`, servidas en puertos distintos para poder tener los tres abiertos a la vez. Sus tres
+campos comunes están repetidos y no importados de `environment.ts` a propósito — `fileReplacements`
+sustituye ese módulo, así que un `import './environment'` desde ellos se resolvería a sí mismos.
+
+`staging` es una configuración **de `serve`**, no de build: se diferencia de `development` únicamente en a
+dónde apunta el proxy (`proxy.staging.conf.json` en vez de `proxy.conf.json`), porque no hay dos APIs
+desplegados que distinguir.
 
 ## Temas
 
@@ -66,11 +84,11 @@ Un tema es una **paleta**, no un rediseño: `{ primary, surface, colorScheme }`.
 `src/app/theme/themes.ts`, se aplica con `definePreset` sobre Aura, y **se resuelve en un único sitio**,
 `resolveTheme()`. Cambiar `themeKey` en el environment cambia toda la aplicación sin tocar un componente.
 
-| Clave | Carácter |
-|---|---|
-| `noche` | oscuro, monocromo, acento frío (el del mockup) |
-| `clasico` | oscuro cálido, dorado sobre piedra |
-| `minimal` | claro, un solo acento |
+| Clave | Carácter | `primary` / `surface` | Puerto para verlo |
+|---|---|---|---|
+| `noche` | oscuro, monocromo, acento frío (el del mockup) | `slate` / `zinc` | 8082 (`npm start`) |
+| `clasico` | oscuro cálido, dorado sobre piedra | `amber` / `stone` | 8083 (`start:clasico`) |
+| `minimal` | claro, un solo acento | `emerald` / `slate` | 8084 (`start:minimal`) |
 
 Ese punto único existe para que el día que el tema venga del API (RF-F04, hoy en borrador) sea cambiar
 una función y nada más.

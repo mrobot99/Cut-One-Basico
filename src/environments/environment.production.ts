@@ -1,8 +1,14 @@
 import type { AppEnvironment } from './environment.model';
 
 /**
- * Cualquier build desplegable. Equivalente de `.env.staging` de `pz-personalizado`, que hoy es el
- * único entorno desplegado del proyecto: el API de staging es el que sirve a `*.cutoneai.com`.
+ * Build de producción. El backend **no tiene todavía un API de producción real**
+ * (`appsettings.Production.json` está vacío, `{}` — Staging es el único ambiente funcional del
+ * proyecto). Mientras eso no cambie, `apiUrl` apunta al mismo API que `environment.staging.ts` a
+ * propósito, para que `npm run build:production` sea desplegable hoy en vez de fallar contra un
+ * backend que no existe.
+ *
+ * El día que exista un API de producción real, este es el único archivo que cambia — la separación
+ * en dos archivos ya está hecha para que ese día sea una URL, no una migración de configuración.
  *
  * `devSubdomain` vacío y `production: true` es lo que apaga el override de tenant: aquí el subdominio
  * lo decide el hostname (RF-G02 §4 RN-04).

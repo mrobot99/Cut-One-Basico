@@ -49,10 +49,53 @@
               ],
               "outputHashing": "all"
             },
+            "staging": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.staging.ts"
+                }
+              ],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "700kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "clasico": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.clasico.ts"
+                }
+              ]
+            },
+            "minimal": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.minimal.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -73,6 +116,14 @@
             "staging": {
               "buildTarget": "cut-one-basic:build:development",
               "proxyConfig": "proxy.staging.conf.json"
+            },
+            "clasico": {
+              "buildTarget": "cut-one-basic:build:clasico",
+              "port": 8083
+            },
+            "minimal": {
+              "buildTarget": "cut-one-basic:build:minimal",
+              "port": 8084
             }
           },
           "defaultConfiguration": "development"
