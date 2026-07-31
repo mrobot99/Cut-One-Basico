@@ -16,6 +16,6 @@ import type { AppEnvironment } from './environment.model';
 export const environment: AppEnvironment = {
   production: true,
   apiUrl: 'https://1w1n64683b.execute-api.us-east-1.amazonaws.com',
-  themeKey: 'noche',
+  themeKey: 'clasico',
   devSubdomain: '',
 };
