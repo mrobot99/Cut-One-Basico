@@ -14,6 +14,10 @@
     (serviceSelected)="bookService($event)"
   />
 
+  @if (referralBarberName(); as name) {
+    <p class="cob-referral-banner" role="status">Reservando con {{ name }}</p>
+  }
+
   <cob-barbers-section
     [barbers]="barbers()"
     [loading]="catalogLoading()"
@@ -39,4 +43,9 @@
 
 <cob-site-footer [branding]="branding()" />
 
-<cob-booking-wizard [services]="services()" [barbers]="barbers()" />
+<cob-booking-wizard
+  [services]="services()"
+  [barbers]="barbers()"
+  [referralBarberName]="referralBarberName()"
+  [referralBarberId]="referralBarberId()"
+/>

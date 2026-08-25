@@ -149,6 +149,15 @@ p {
   min-width: 0;
 }
 
+/* Link individual por barbero (?barbero={id}): aviso al llegar por él, tanto en la landing como
+   dentro del modal del wizard — comparte esta clase en los dos sitios. */
+.cob-referral-banner {
+  color: var(--cob-accent);
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
 .cob-visually-hidden {
   position: absolute;
   width: 1px;

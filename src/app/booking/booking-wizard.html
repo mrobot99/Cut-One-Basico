@@ -32,6 +32,9 @@
       <p-button label="Listo" (onClick)="close()" />
     </div>
   } @else {
+    @if (referralBarberName(); as name) {
+      <p class="cob-referral-banner" role="status">Reservando con {{ name }}</p>
+    }
     <p-stepper [(value)]="step" [linear]="false" styleClass="wizard">
       <p-step-list>
         <p-step [value]="1">Servicio</p-step>

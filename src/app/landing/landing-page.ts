@@ -4,8 +4,10 @@ import {
   computed,
   effect,
   inject,
+  signal,
   viewChild,
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { applyPageMetadata } from '../core/page-metadata';
 import { BookingWizard } from '../booking/booking-wizard';
 import { CatalogService } from '../data/catalog.service';
@@ -47,8 +49,16 @@ export class LandingPage {
   private readonly settings = inject(SettingsService);
   private readonly catalog = inject(CatalogService);
   private readonly testimonialsService = inject(TestimonialsService);
+  private readonly route = inject(ActivatedRoute);
 
   private readonly wizard = viewChild.required(BookingWizard);
+
+  /** Link individual por barbero (?barbero={id}): id crudo, capturado una sola vez al cargar — sobrevive
+   * aunque el catálogo tarde o el barbero ya no sea elegible, porque también es el dato de atribución
+   * que viaja hacia la creación de la cita. */
+  protected readonly referralBarberId = signal<string | null>(null);
+  protected readonly referralBarberName = signal<string | null>(null);
+  private wizardOpenedFromLink = false;
 
   protected readonly branding = this.settings.branding;
   protected readonly services = this.catalog.services;
@@ -81,6 +91,25 @@ export class LandingPage {
     // Título y favicon en cuanto llega el branding (RF-G02 §8): `index.html` es un shell único servido
     // a todos los subdominios y no puede llevar el nombre de ningún tenant.
     effect(() => applyPageMetadata(this.branding()));
+
+    this.referralBarberId.set(this.route.snapshot.queryParamMap.get('barbero'));
+
+    // Fail-open: sin match (no existe, desactivado, o sin horario — el catálogo público ya solo trae
+    // los elegibles) no pasa nada, landing normal. Con match, abre el wizard solo — sin clic previo —
+    // saltando el paso de barbero (decisión ya resuelta en BookingWizard.firstIncompleteStep).
+    effect(() => {
+      const id = this.referralBarberId();
+      const list = this.barbers();
+      if (!id || this.wizardOpenedFromLink || list.length === 0) {
+        return;
+      }
+      const match = list.find((b) => b.id === id);
+      if (match) {
+        this.wizardOpenedFromLink = true;
+        this.referralBarberName.set(match.displayName);
+        this.wizard().open(null, match);
+      }
+    });
   }
 
   protected openWizard(): void {

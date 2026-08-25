@@ -56,6 +56,10 @@ export class BookingWizard {
 
   readonly services = input.required<readonly PublicService[]>();
   readonly barbers = input.required<readonly PublicBarber[]>();
+  /** Nombre del barbero cuyo link originó esta apertura (link individual), para el aviso dentro del modal. */
+  readonly referralBarberName = input<string | null>(null);
+  /** Id crudo del barbero del link — viaja a la creación de la cita como dato de atribución. */
+  readonly referralBarberId = input<string | null>(null);
 
   protected readonly visible = signal(false);
   protected readonly step = signal(1);
@@ -195,6 +199,7 @@ export class BookingWizard {
           phone: values.phone.trim() || null,
           notes: values.notes.trim() || null,
         },
+        referralBarberId: this.referralBarberId(),
       });
 
       this.created.set(created);

@@ -70,6 +70,8 @@ export interface CreateAppointmentInput {
     phone: string | null;
     notes: string | null;
   };
+  /** Id del barbero cuyo link de reserva originó esta cita, si vino de uno (dato de tracking, opcional). */
+  referralBarberId?: string | null;
 }
 
 export interface AppointmentCreatedResponse {
