@@ -99,3 +99,44 @@ export interface SubmitSurveyInput {
   rating: number;
   text?: string;
 }
+
+/**
+ * RF-R01 (020-rfs-editar-reserva). Estado de una cita en la pantalla pública de gestión, a la que se
+ * llega desde el botón del correo de confirmación.
+ *
+ * `dateEs` ya viene formateada en español por el backend, igual que `SurveyInfo.appointmentDateEs`:
+ * es fecha en hora de negocio, y reformatearla en el cliente la desplazaría a la zona del visitante.
+ *
+ * `notEditableReason` es **texto**, no un código: los tres motivos (cancelada, completada, ya pasó)
+ * llevan a la misma pantalla y no ramifican nada (§10.3 nota 4 del RF).
+ */
+export interface ManageAppointment {
+  shopName: string;
+  logoUrl: string;
+  appointmentId: string;
+  confirmationCode: string;
+  status: string;
+  barberId: string;
+  barberName: string;
+  serviceId: string;
+  serviceName: string;
+  price: number;
+  durationMin: number;
+  /** `"yyyy-MM-dd"`. */
+  date: string;
+  /** `"HH:mm:ss"`. */
+  startTime: string;
+  dateEs: string;
+  customerName: string;
+  editable: boolean;
+  notEditableReason: string | null;
+}
+
+export interface RescheduleInput {
+  barberId: string;
+  serviceId: string;
+  /** `"yyyy-MM-dd"`. */
+  date: string;
+  /** El backend acepta `"HH:mm"` y `"HH:mm:ss"`. */
+  startTime: string;
+}

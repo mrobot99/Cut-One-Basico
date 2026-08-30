@@ -16,6 +16,13 @@ export const routes: Routes = [
     loadComponent: () => import('./survey/survey-page').then((m) => m.SurveyPage),
   },
   {
+    // RF-R01 (020-rfs-editar-reserva): mismo argumento que la ruta de encuesta — el backend compone
+    // `https://{subdomain}.{domain}/reserva/{id}` en el correo de confirmación
+    // (`TransactionalEmails.RenderManageButtonHtml`), así que quien sirve `/` es dueño de esta ruta.
+    path: 'reserva/:appointmentId',
+    loadComponent: () => import('./manage/manage-booking-page').then((m) => m.ManageBookingPage),
+  },
+  {
     path: '**',
     loadComponent: () => import('./not-found/not-found-page').then((m) => m.NotFoundPage),
   },

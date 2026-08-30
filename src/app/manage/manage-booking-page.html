@@ -1,0 +1,203 @@
+<!-- RF-R01 §7. Esta página no lleva el landing entero: no hay nada que navegar y las anclas del
+     landing (#servicios, #barberos) no existen aquí. Se identifica con `shopName` y `logoUrl` que
+     vienen en la propia respuesta del GET, así que no se pide `/settings` — mismo criterio que la
+     página de encuesta (RN-05/RN-06 de RF-G05). -->
+<main class="page">
+  @if (state() === 'loading') {
+    <section class="card card--center">
+      <p-skeleton shape="circle" size="4rem" />
+      <p-skeleton width="60%" height="1.5rem" />
+      <p-skeleton width="80%" />
+      <p-skeleton width="40%" height="2.5rem" />
+    </section>
+  } @else if (state() === 'error') {
+    <section class="card card--center">
+      <i class="pi pi-exclamation-triangle card__icon" aria-hidden="true"></i>
+      <p-message severity="warn" [text]="errorMessage()" />
+    </section>
+  } @else if (appointment(); as booking) {
+    <section class="card card--center header">
+      @if (logo(); as src) {
+        <img class="header__logo" [src]="src" [alt]="booking.shopName || 'Logo'" />
+      }
+      @if (booking.shopName) {
+        <h1 class="header__shop">{{ booking.shopName }}</h1>
+      }
+      <p class="cob-muted">Hola {{ booking.customerName }}</p>
+    </section>
+
+    <!-- Resumen de la cita tal como está guardada ahora mismo. En el estado "saved" es ya la nueva. -->
+    <section class="card">
+      <h2 class="card__title">
+        {{ state() === 'saved' ? 'Tu reserva quedó así' : 'Tu reserva' }}
+      </h2>
+
+      <dl class="summary">
+        <div><dt class="cob-muted">Servicio</dt><dd>{{ booking.serviceName }}</dd></div>
+        <div><dt class="cob-muted">Profesional</dt><dd>{{ booking.barberName }}</dd></div>
+        <!-- `dateEs` viene formateada en español por el backend, en hora de negocio: no se reformatea. -->
+        <div><dt class="cob-muted">Fecha</dt><dd>{{ booking.dateEs }}</dd></div>
+        <div>
+          <dt class="cob-muted">Hora</dt>
+          <dd>{{ booking.startTime.slice(0, 5) }} · {{ booking.durationMin }} min</dd>
+        </div>
+        <div><dt class="cob-muted">Código</dt><dd>{{ booking.confirmationCode }}</dd></div>
+      </dl>
+    </section>
+
+    @if (state() === 'saved') {
+      <section class="card card--center">
+        <i class="pi pi-check-circle card__icon" aria-hidden="true"></i>
+        <h2 class="card__title">¡Reserva actualizada!</h2>
+        <p class="cob-muted">Te enviamos los datos nuevos por correo.</p>
+        <p-button label="Volver a modificar" [text]="true" icon="pi pi-pencil" (onClick)="editAgain()" />
+      </section>
+    } @else if (!booking.editable) {
+      <!-- El backend redacta el motivo y el frontend solo lo pinta: las dos landings habrían escrito
+           la misma frase dos veces, y dos copias de una regla de negocio divergen (§10.3 nota 1). -->
+      <section class="card card--center">
+        <i class="pi pi-info-circle card__icon" aria-hidden="true"></i>
+        <p-message severity="info" [text]="booking.notEditableReason || 'Esta cita ya no se puede modificar.'" />
+      </section>
+    } @else {
+      <section class="card">
+        <h2 class="card__title">Servicio</h2>
+        @if (services().length === 0) {
+          <p-message severity="info" text="Este negocio todavía no publicó servicios." />
+        } @else {
+          <div class="options">
+            @for (option of services(); track option.id) {
+              <button
+                type="button"
+                class="option"
+                [class.option--active]="serviceId() === option.id"
+                (click)="chooseService(option)"
+              >
+                @if (image(option.imageUrl); as src) {
+                  <img class="option__thumb" [src]="src" [alt]="option.name" loading="lazy" />
+                }
+                <span class="option__text">
+                  <strong>{{ option.name }}</strong>
+                  <span class="cob-muted">{{ option.durationMin }} min</span>
+                </span>
+                <strong class="option__price">{{ formatPrice(option.price) }}</strong>
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="card">
+        <h2 class="card__title">Profesional</h2>
+        @if (barbers().length === 0) {
+          <p-message severity="info" text="Este negocio todavía no publicó profesionales." />
+        } @else {
+          <div class="options">
+            @for (option of barbers(); track option.id) {
+              <button
+                type="button"
+                class="option"
+                [class.option--active]="barberId() === option.id"
+                (click)="chooseBarber(option)"
+              >
+                @if (image(option.photoUrl); as src) {
+                  <img class="option__avatar" [src]="src" [alt]="barberName(option)" loading="lazy" />
+                }
+                <span class="option__text">
+                  <strong>{{ barberName(option) }}</strong>
+                  @if (option.specialty) {
+                    <span class="cob-muted">{{ option.specialty }}</span>
+                  }
+                </span>
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="card">
+        <h2 class="card__title">Fecha y hora</h2>
+
+        <div #dayStrip class="days" role="group" aria-label="Elige el día">
+          @for (day of days(); track day) {
+            <button
+              type="button"
+              class="day"
+              [attr.data-day]="day"
+              [class.day--active]="date() === day"
+              (click)="chooseDate(day)"
+            >
+              <span class="day__weekday">{{ labelsFor(day).weekday }}</span>
+              <span class="day__number">{{ labelsFor(day).day }}</span>
+              <span class="day__month">{{ labelsFor(day).month }}</span>
+            </button>
+          }
+        </div>
+
+        @if (slotsLoading()) {
+          <div class="slots-loading">
+            <p-progressSpinner [style]="{ width: '2.5rem', height: '2.5rem' }" />
+          </div>
+        } @else if (slotsFailed()) {
+          <p-message severity="warn" text="No pudimos consultar la disponibilidad. Intenta de nuevo." />
+        } @else if (slotsState() === 'no-shift') {
+          <!-- Tres estados vacíos con tres causas distintas, igual que en el wizard. -->
+          <p-message severity="info" text="Este profesional no atiende ese día. Prueba con otra fecha." />
+        } @else if (slotsState() === 'full') {
+          <p-message severity="info" text="Ese día está completo. Prueba con otra fecha." />
+        } @else {
+          <div class="slots">
+            @for (slot of slots(); track slot.startTime) {
+              <button
+                type="button"
+                class="slot"
+                [class.slot--active]="time() === slot.label"
+                [class.slot--taken]="!slot.available"
+                [disabled]="!slot.available"
+                (click)="chooseTime(slot)"
+              >
+                {{ slot.label }}
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="card">
+        <h2 class="card__title">Quedaría así</h2>
+        <dl class="summary">
+          <div>
+            <dt class="cob-muted">Servicio</dt>
+            <dd>{{ selectedService()?.name || booking.serviceName }}</dd>
+          </div>
+          <div>
+            <dt class="cob-muted">Profesional</dt>
+            <dd>{{ selectedBarber() ? barberName(selectedBarber()) : booking.barberName }}</dd>
+          </div>
+          <div>
+            <dt class="cob-muted">Fecha</dt>
+            <dd>{{ date() ? formatDate(date()!) : '—' }}</dd>
+          </div>
+          <div><dt class="cob-muted">Hora</dt><dd>{{ time() || '—' }}</dd></div>
+        </dl>
+
+        <p class="total">
+          <span class="cob-muted">Total</span>
+          <strong>{{ formatPrice(selectedService()?.price ?? booking.price) }}</strong>
+        </p>
+
+        <p-button
+          label="Guardar cambios"
+          icon="pi pi-check"
+          [loading]="submitting()"
+          [disabled]="!time() || !dirty() || submitting()"
+          (onClick)="save()"
+        />
+
+        @if (!dirty()) {
+          <p class="cob-muted total__hint">Cambia algo para poder guardar.</p>
+        }
+      </section>
+    }
+  }
+</main>
