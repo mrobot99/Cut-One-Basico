@@ -15,6 +15,17 @@ export interface PublicService {
   category: string | null;
   isPopular: boolean;
   imageUrl: string | null;
+  /**
+   * Barberos que prestan este servicio (RF-BS03 §3, serie 023-rfs-barbero-servicio).
+   *
+   * Es **el único campo nuevo del contrato** y con él el wizard filtra en los dos sentidos sin una
+   * sola petición extra: el directo es `barbers.filter(b => service.barberIds.includes(b.id))` y el
+   * inverso —el del link personal `?barbero={id}`— `services.filter(s => s.barberIds.includes(id))`.
+   *
+   * El backend ya omite del catálogo los servicios que no presta ningún barbero reservable, así que
+   * esta lista nunca llega vacía.
+   */
+  barberIds: string[];
 }
 
 export interface PublicBarber {

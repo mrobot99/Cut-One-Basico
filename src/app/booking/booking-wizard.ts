@@ -82,6 +82,32 @@ export class BookingWizard {
   protected readonly slotsState = computed(() => slotsState(this.slots()));
 
   /**
+   * RF-BS03 §5 (serie 023): las dos listas del wizard se filtran la una a la otra, en memoria y sin
+   * ninguna petición extra — `barberIds` viaja dentro de cada servicio del catálogo.
+   *
+   * `visibleServices` solo recorta cuando el barbero viene **fijado desde su link personal**
+   * `?barbero={id}`, que es el único camino por el que este wizard se recorre al revés. Elegir barbero
+   * en el paso 2 ya implica haber elegido servicio en el 1, así que ahí no hay nada que filtrar.
+   */
+  protected readonly visibleServices = computed(() => {
+    const chosenBarber = this.barber();
+    if (!chosenBarber) {
+      return this.services();
+    }
+
+    return this.services().filter((s) => s.barberIds.includes(chosenBarber.id));
+  });
+
+  protected readonly visibleBarbers = computed(() => {
+    const chosenService = this.service();
+    if (!chosenService) {
+      return this.barbers();
+    }
+
+    return this.barbers().filter((b) => chosenService.barberIds.includes(b.id));
+  });
+
+  /**
    * Límites del backend (`CreateAppointmentRequestValidator`), no los de `pz-personalizado` — su
    * esquema zod usa 80 y 300, más estrictos que el servidor sin motivo documentado. Rechazar en el
    * cliente algo que el servidor aceptaría es fricción gratuita.
@@ -125,6 +151,16 @@ export class BookingWizard {
   protected chooseService(service: PublicService): void {
     this.service.set(service);
     this.clearTime();
+
+    // RF-BS03 RN-01: si el barbero ya elegido no presta el servicio nuevo, se descarta y se vuelve al
+    // paso 2. Sin esto, cambiar de servicio con un barbero ya seleccionado saltaría directo al paso 3
+    // con una pareja que el backend rechaza — el cliente vería el error después de elegir la hora, en
+    // vez de simplemente no poder formar esa combinación.
+    const chosenBarber = this.barber();
+    if (chosenBarber && !service.barberIds.includes(chosenBarber.id)) {
+      this.barber.set(null);
+    }
+
     this.step.set(this.barber() ? 3 : 2);
 
     if (this.barber()) {

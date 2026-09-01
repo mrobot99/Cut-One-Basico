@@ -62,11 +62,11 @@
     } @else {
       <section class="card">
         <h2 class="card__title">Servicio</h2>
-        @if (services().length === 0) {
+        @if (visibleServices().length === 0) {
           <p-message severity="info" text="Este negocio todavía no publicó servicios." />
         } @else {
           <div class="options">
-            @for (option of services(); track option.id) {
+            @for (option of visibleServices(); track option.id) {
               <button
                 type="button"
                 class="option"
@@ -89,11 +89,11 @@
 
       <section class="card">
         <h2 class="card__title">Profesional</h2>
-        @if (barbers().length === 0) {
+        @if (visibleBarbers().length === 0) {
           <p-message severity="info" text="Este negocio todavía no publicó profesionales." />
         } @else {
           <div class="options">
-            @for (option of barbers(); track option.id) {
+            @for (option of visibleBarbers(); track option.id) {
               <button
                 type="button"
                 class="option"

@@ -86,6 +86,37 @@ export class ManageBookingPage {
   );
 
   /**
+   * RF-BS03 §5 (serie 023): mismo filtrado cruzado que el wizard de reserva, y aquí hace más falta —
+   * ésta es la única pantalla pública que deja cambiar **barbero y servicio a la vez**, y el backend
+   * la rechaza con `SERVICE_NOT_OFFERED_BY_BARBER` si la pareja no está configurada.
+   *
+   * Los dos filtros conservan **la selección actual de la cita** aunque ya no esté en la matriz:
+   * RF-BS03 RN-06 deja válida una cita cuya pareja se desasignó después de agendarla, y sin ese
+   * añadido el cliente abriría su propia reserva y no vería marcado ni su barbero ni su servicio.
+   */
+  protected readonly visibleServices = computed(() => {
+    const barberId = this.barberId();
+    if (!barberId) {
+      return this.services();
+    }
+
+    return this.services().filter(
+      (s) => s.barberIds.includes(barberId) || s.id === this.appointment()?.serviceId,
+    );
+  });
+
+  protected readonly visibleBarbers = computed(() => {
+    const service = this.selectedService();
+    if (!service) {
+      return this.barbers();
+    }
+
+    return this.barbers().filter(
+      (b) => service.barberIds.includes(b.id) || b.id === this.appointment()?.barberId,
+    );
+  });
+
+  /**
    * Sin cambios no hay nada que guardar. El backend acepta el PUT idempotente (RN-11), pero pedirle a
    * alguien que confirme un cambio que no hizo es ruido.
    */
@@ -167,6 +198,15 @@ export class ManageBookingPage {
     // Cambiar de servicio cambia la duración, así que la hora elegida puede dejar de caber: la
     // rejilla se recalcula y la selección se limpia en vez de arrastrar un hueco que ya no existe.
     this.time.set(null);
+
+    // RF-BS03 RN-01: si el barbero seleccionado no presta el servicio nuevo, se mueve al primero que
+    // sí — y si no hay ninguno, la lista de barberos queda vacía y el aviso lo explica. Dejarlo como
+    // está pediría disponibilidad de una pareja que el backend rechaza.
+    const currentBarberId = this.barberId();
+    if (currentBarberId && !service.barberIds.includes(currentBarberId) && service.barberIds.length > 0) {
+      this.barberId.set(service.barberIds[0]);
+    }
+
     void this.loadAvailability();
   }
 
@@ -291,6 +331,10 @@ export class ManageBookingPage {
       case 'BARBER_NOT_FOUND':
       case 'SERVICE_NOT_FOUND':
         return 'La selección ya no está disponible';
+      // RF-BS03 RN-01 (serie 023): sin este caso el mensaje sería el genérico "No pudimos guardar el
+      // cambio", que no dice qué hay que cambiar para que funcione.
+      case 'SERVICE_NOT_OFFERED_BY_BARBER':
+        return 'Ese profesional no presta ese servicio';
       default:
         return 'No pudimos guardar el cambio';
     }

@@ -16,6 +16,7 @@ function service(overrides: Partial<PublicService> = {}): PublicService {
     category: null,
     isPopular: false,
     imageUrl: null,
+    barberIds: [],
     ...overrides,
   };
 }

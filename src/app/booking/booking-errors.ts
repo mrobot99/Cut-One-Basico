@@ -79,6 +79,17 @@ export function planForBookingError(error: unknown): BookingErrorPlan {
         reaction: 'restart',
       };
 
+    // RF-BS03 RN-01 (serie 023). Tiene que estar aquí explícitamente: un código desconocido cae al
+    // `default`, cuyo texto genérico —"No pudimos completar la reserva"— sería engañoso justo en el
+    // caso que más se va a dar durante la ventana entre desplegar el backend y desplegar esta landing,
+    // cuando el sitio ya cargado sigue ofreciendo parejas que el servidor rechaza.
+    case 'SERVICE_NOT_OFFERED_BY_BARBER':
+      return {
+        summary: 'Ese profesional no presta ese servicio',
+        detail: 'Elige otra combinación: volvemos al inicio de la reserva.',
+        reaction: 'restart',
+      };
+
     default:
       return {
         summary: 'No pudimos completar la reserva',
