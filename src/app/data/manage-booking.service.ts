@@ -46,6 +46,20 @@ export class ManageBookingService {
     );
   }
 
+  /**
+   * Confirma la cita desde el botón del correo (RF-CN01 §4). Es idempotente: confirmar una ya
+   * confirmada devuelve 200 con su estado, no un error — la pantalla puede llamarlo sin comprobar
+   * nada. Sin cuerpo: el único dato es el id de la ruta.
+   */
+  confirm(appointmentId: string): Promise<ManageAppointment> {
+    return firstValueFrom(
+      this.http.post<ManageAppointment>(
+        `/api/v1/public/appointments/${appointmentId}/confirm`,
+        null,
+      ),
+    );
+  }
+
   reschedule(appointmentId: string, input: RescheduleInput): Promise<ManageAppointment> {
     return firstValueFrom(
       this.http.put<ManageAppointment>(

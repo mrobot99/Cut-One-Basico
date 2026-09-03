@@ -45,6 +45,41 @@
       </dl>
     </section>
 
+    <!-- RF-CN01 (027-rfs-confirmar-cita-desde-el-correo). Tres bloques excluyentes, en el orden en que
+         le importan al cliente: ya confirmada / se puede confirmar / no se pudo. No se pintan en el
+         estado "saved", que es la pantalla de "listo" de la reprogramación y tiene su propio mensaje. -->
+    @if (state() !== 'saved') {
+      @if (booking.status === 'Confirmed') {
+        <section class="card card--center">
+          <i class="pi pi-check-circle card__icon" aria-hidden="true"></i>
+          <h2 class="card__title">
+            {{ justConfirmed() ? '¡Cita confirmada!' : 'Tu cita ya está confirmada' }}
+          </h2>
+          <p class="cob-muted">Te esperamos. Si algo cambia, puedes modificarla aquí abajo.</p>
+        </section>
+      } @else if (booking.confirmable) {
+        <section class="card card--center">
+          <i class="pi pi-calendar-plus card__icon" aria-hidden="true"></i>
+          <h2 class="card__title">Falta confirmar tu cita</h2>
+          <p class="cob-muted">Confírmala para que tu profesional sepa que vienes.</p>
+          <p-button
+            label="Confirmar mi cita"
+            icon="pi pi-check"
+            [loading]="confirming()"
+            (onClick)="confirmBooking()"
+          />
+        </section>
+      }
+
+      <!-- El 409 de confirmar (cancelada, completada o ya pasada) es información persistente, no un
+           aviso que se va solo: se queda en pantalla junto a los datos que lo explican. -->
+      @if (confirmError(); as message) {
+        <section class="card card--center">
+          <p-message severity="info" [text]="message" />
+        </section>
+      }
+    }
+
     @if (state() === 'saved') {
       <section class="card card--center">
         <i class="pi pi-check-circle card__icon" aria-hidden="true"></i>

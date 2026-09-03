@@ -51,6 +51,14 @@ export class ManageBookingPage {
   /** Llega por `withComponentInputBinding()`, sin inyectar `ActivatedRoute`. */
   readonly appointmentId = input.required<string>();
 
+  /**
+   * `?confirmar=1` — lo trae el botón "Confirmar mi cita" del correo de reserva (RF-CN01,
+   * 027-rfs-confirmar-cita-desde-el-correo). `withComponentInputBinding()` también enlaza los
+   * parámetros de query, así que no hace falta `ActivatedRoute` para leerlo. Sin él, esta pantalla
+   * es exactamente la de siempre.
+   */
+  readonly confirmar = input<string>();
+
   protected readonly state = signal<PageState>('loading');
   protected readonly errorMessage = signal('');
   protected readonly appointment = signal<ManageAppointment | null>(null);
@@ -68,6 +76,14 @@ export class ManageBookingPage {
   protected readonly slotsLoading = signal(false);
   protected readonly slotsFailed = signal(false);
   protected readonly submitting = signal(false);
+
+  /**
+   * Confirmación (RF-CN01). `justConfirmed` distingue "acabo de confirmarla" de "ya estaba
+   * confirmada": las dos pintan la cita como confirmada, pero solo la primera lo celebra.
+   */
+  protected readonly confirming = signal(false);
+  protected readonly justConfirmed = signal(false);
+  protected readonly confirmError = signal<string | null>(null);
 
   /** La ventana se calcula una vez: es la misma durante toda la sesión. */
   protected readonly days = signal(bookingWindow());
@@ -267,6 +283,34 @@ export class ManageBookingPage {
     }
   }
 
+  /**
+   * RF-CN01 §5: confirmar es idempotente en el backend, así que la pantalla no comprueba el estado
+   * antes de llamar — solo evita ofrecer el botón cuando no hay nada que confirmar.
+   */
+  protected async confirmBooking(): Promise<void> {
+    if (this.confirming()) {
+      return;
+    }
+
+    this.confirming.set(true);
+    this.confirmError.set(null);
+
+    try {
+      this.appointment.set(await this.manage.confirm(this.appointmentId()));
+      this.justConfirmed.set(true);
+    } catch (error) {
+      // El motivo del 409 lo redacta el backend y es el mismo texto que habría venido en
+      // `notConfirmableReason`: se pinta tal cual, en la pantalla y no en un aviso que se va solo.
+      this.confirmError.set(
+        error instanceof ApiError
+          ? error.message
+          : 'No pudimos confirmar tu cita. Revisa tu conexión e inténtalo de nuevo.',
+      );
+    } finally {
+      this.confirming.set(false);
+    }
+  }
+
   /** Vuelve del "listo" al formulario, para encadenar otro cambio sin recargar la página. */
   protected editAgain(): void {
     this.syncSelectionFromAppointment();
@@ -356,6 +400,15 @@ export class ManageBookingPage {
       // sería gastar un viaje para pintar algo que no se puede usar.
       if (appointment.editable) {
         void this.loadAvailability();
+      }
+
+      // RF-CN01: disparo automático del botón del correo. El link lleva a esta pantalla y no
+      // directamente a la API (decisión 2 de la serie): los escáneres antivirus y los prefetch de los
+      // clientes de correo siguen los enlaces, y un GET que confirmara al abrirse confirmaría citas
+      // que el cliente nunca vio. Va aquí, dentro de la única carga, y no en un `effect`: así ocurre
+      // exactamente una vez y sobre datos ya cargados.
+      if (this.confirmar() === '1' && appointment.confirmable) {
+        void this.confirmBooking();
       }
     } catch (error) {
       this.errorMessage.set(this.messageFor(error));

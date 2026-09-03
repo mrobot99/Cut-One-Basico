@@ -141,6 +141,13 @@ export interface ManageAppointment {
   customerName: string;
   editable: boolean;
   notEditableReason: string | null;
+  /**
+   * RF-CN01 (027-rfs-confirmar-cita-desde-el-correo): si la cita está pendiente y todavía se puede
+   * confirmar. Es `false` también cuando ya está confirmada — ese caso se distingue por `status`.
+   */
+  confirmable: boolean;
+  /** Motivo redactado de por qué no se puede confirmar, o null si sí se puede o si ya lo está. */
+  notConfirmableReason: string | null;
 }
 
 export interface RescheduleInput {
