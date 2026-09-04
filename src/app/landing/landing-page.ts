@@ -11,19 +11,21 @@ import { ActivatedRoute } from '@angular/router';
 import { applyPageMetadata } from '../core/page-metadata';
 import { BookingWizard } from '../booking/booking-wizard';
 import { CatalogService } from '../data/catalog.service';
+import { PopularServicesService } from '../data/popular.service';
 import { SettingsService } from '../data/settings.service';
 import { TestimonialsService } from '../data/testimonials.service';
 import type { PublicBarber, PublicService } from '../data/public-api.models';
 import { AboutSection } from './about-section';
 import { BarbersSection } from './barbers-section';
 import { HeroSection } from './hero-section';
+import { PopularSection } from './popular-section';
 import { ServicesSection } from './services-section';
 import { SiteFooter } from './site-footer';
 import { SiteHeader } from './site-header';
 import { TestimonialsSection } from './testimonials-section';
 
 /**
- * La página `/`. Orquesta las seis secciones y el wizard; no pinta ningún dato por su cuenta.
+ * La página `/`. Orquesta las siete secciones y el wizard; no pinta ningún dato por su cuenta.
  *
  * Es el único sitio que llama a `ensureLoaded()`: los servicios de datos son singletons y las secciones
  * consumen sus señales, así que `/services` y `/barbers` se piden **una vez** por carga de página
@@ -37,6 +39,7 @@ import { TestimonialsSection } from './testimonials-section';
     BarbersSection,
     BookingWizard,
     HeroSection,
+    PopularSection,
     ServicesSection,
     SiteFooter,
     SiteHeader,
@@ -48,6 +51,7 @@ import { TestimonialsSection } from './testimonials-section';
 export class LandingPage {
   private readonly settings = inject(SettingsService);
   private readonly catalog = inject(CatalogService);
+  private readonly popular = inject(PopularServicesService);
   private readonly testimonialsService = inject(TestimonialsService);
   private readonly route = inject(ActivatedRoute);
 
@@ -65,6 +69,7 @@ export class LandingPage {
   protected readonly barbers = this.catalog.barbers;
   protected readonly catalogLoading = this.catalog.loading;
   protected readonly catalogFailed = this.catalog.failed;
+  protected readonly popularServices = this.popular.items;
   protected readonly testimonials = this.testimonialsService.items;
 
   /**
@@ -86,6 +91,7 @@ export class LandingPage {
   constructor() {
     this.settings.ensureLoaded();
     this.catalog.ensureLoaded();
+    this.popular.ensureLoaded();
     this.testimonialsService.ensureLoaded();
 
     // Título y favicon en cuanto llega el branding (RF-G02 §8): `index.html` es un shell único servido

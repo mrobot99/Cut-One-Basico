@@ -7,6 +7,14 @@
     (book)="openWizard()"
   />
 
+  <!-- RF-MP01 (serie 030): va ANTES del catálogo completo porque es un atajo a él. Se oculta sola
+       cuando no hay ranking, así que la alternancia de fondos aguanta las dos formas de la página:
+       con ella queda alt → plano → alt → plano → alt, y sin ella la de siempre. -->
+  <cob-popular-section
+    [services]="popularServices()"
+    (serviceSelected)="bookService($event)"
+  />
+
   <cob-services-section
     [services]="services()"
     [loading]="catalogLoading()"

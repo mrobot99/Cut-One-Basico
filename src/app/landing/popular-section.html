@@ -1,0 +1,63 @@
+<!-- La sección entera se monta o no se monta. El backend devuelve [] cuando no hay ranking escrito,
+     cuando el que hay no deja tres servicios vivos, o cuando el cache falla; y el servicio de datos
+     traduce cualquier fallo de red a esa misma lista vacía. En los tres casos la página queda
+     idéntica a como estaba antes de que esta sección existiera (RF-MP01 RN-08). -->
+@if (services().length > 0) {
+  <section class="cob-section cob-section--alt" id="lo-mas-pedido">
+    <div class="cob-container">
+      <div class="cob-section__head">
+        <span class="cob-eyebrow">Lo más reservado</span>
+        <h2 class="cob-title">Lo más pedido aquí</h2>
+        <p class="cob-subtitle">Los servicios que más ha reservado la gente en el último mes.</p>
+      </div>
+
+      <div class="popular-grid">
+        @for (service of services(); track service.id) {
+          <p-card styleClass="popular-card">
+            <ng-template #header>
+              <div class="popular-card__media">
+                @if (image(service); as src) {
+                  <img class="cob-media" [src]="src" [alt]="service.name" loading="lazy" />
+                } @else {
+                  <div class="cob-media cob-media--empty">
+                    <i class="pi pi-image" aria-hidden="true"></i>
+                  </div>
+                }
+              </div>
+            </ng-template>
+
+            <div class="popular-card__body">
+              <!-- RN-09: la posición se dice con TEXTO, no solo con color ni con un icono. Se lee
+                   igual en un lector de pantalla y en blanco y negro. -->
+              <span class="popular-card__rank">
+                <i class="pi pi-chart-line" aria-hidden="true"></i>
+                N.º {{ service.rank }} en reservas
+              </span>
+
+              <h3 class="popular-card__name">{{ service.name }}</h3>
+
+              <div class="popular-card__meta">
+                @if (service.category) {
+                  <span class="popular-card__category">{{ service.category }}</span>
+                }
+                <span><i class="pi pi-clock" aria-hidden="true"></i> {{ service.durationMin }} min</span>
+              </div>
+
+              <strong class="popular-card__price">{{ formatPrice(service.price) }}</strong>
+            </div>
+
+            <ng-template #footer>
+              <p-button
+                label="Reservar este servicio"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                [fluid]="true"
+                (onClick)="serviceSelected.emit(service)"
+              />
+            </ng-template>
+          </p-card>
+        }
+      </div>
+    </div>
+  </section>
+}

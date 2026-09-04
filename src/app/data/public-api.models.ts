@@ -28,6 +28,25 @@ export interface PublicService {
   barberIds: string[];
 }
 
+/**
+ * Un servicio del ranking "lo más pedido" (RF-MP01, serie 030).
+ *
+ * **Extiende `PublicService` a propósito, no es un tipo paralelo.** El backend devuelve el servicio
+ * entero más la posición, así que una tarjeta de esta sección puede emitirse tal cual al wizard sin
+ * ninguna conversión: hay **un solo camino de reserva**, el mismo que el del catálogo.
+ *
+ * **No lleva conteo de reservas, y no es un olvido del contrato.** El requisito pedía expresamente no
+ * mostrar "N clientes lo reservaron este mes" y el backend no lo manda, para que reponerlo no sea
+ * cuestión de descomentar una línea aquí (RF-MP01 §2 y RN-06).
+ */
+export interface PopularService extends PublicService {
+  /**
+   * Posición visible, de 1 a 3. Es la posición **tras filtrar** los servicios inactivos o sin
+   * barberos, no la del ranking guardado: si el nº 2 se desactiva, el 3º llega aquí como nº 2.
+   */
+  rank: number;
+}
+
 export interface PublicBarber {
   id: string;
   displayName: string | null;
