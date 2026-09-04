@@ -12,4 +12,5 @@ export const environment: AppEnvironment = {
   apiUrl: '',
   themeKey: 'noche',
   devSubdomain: 'cut-test',
+  version: 'dev',
 };

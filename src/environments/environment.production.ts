@@ -13,9 +13,15 @@ import type { AppEnvironment } from './environment.model';
  * `devSubdomain` vacío y `production: true` es lo que apaga el override de tenant: aquí el subdominio
  * lo decide el hostname (RF-G02 §4 RN-04).
  */
+/**
+ * `version` es **el único campo de este archivo que se toca en cada push a `master`** (N+1 el mismo
+ * día, `.1` en día nuevo), y va en el mismo commit que el cambio — no después: el push es lo que
+ * dispara el build, así que un bump posterior describe un bundle que ya se publicó sin él.
+ */
 export const environment: AppEnvironment = {
   production: true,
   apiUrl: 'https://1w1n64683b.execute-api.us-east-1.amazonaws.com',
   themeKey: 'clasico',
   devSubdomain: '',
+  version: '2026-09-04.1',
 };

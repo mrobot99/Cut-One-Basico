@@ -12,4 +12,8 @@ export const environment: AppEnvironment = {
   apiUrl: 'https://1w1n64683b.execute-api.us-east-1.amazonaws.com',
   themeKey: 'noche',
   devSubdomain: '',
+  // Nadie despliega esta configuración: Netlify observa `master` y construye con `production`. La
+  // marca dice de dónde salió el bundle, que es lo único que se le puede preguntar a un build que no
+  // tiene un sitio donde vivir. Si algún día se despliega de verdad, aquí empieza a llevar fecha.
+  version: 'staging',
 };

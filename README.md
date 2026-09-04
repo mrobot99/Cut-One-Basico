@@ -51,13 +51,13 @@ por defecto de Angular) ni 8082. Con el proxy el navegador ve mismo origen y COR
 Angular no lee archivos `.env`. La configuración vive en `src/environments/`, intercambiada por
 `fileReplacements`:
 
-| Archivo | Cuándo | `production` | `apiUrl` | `devSubdomain` |
-|---|---|---|---|---|
-| `environment.ts` | `npm start`, `start:staging`, tests | `false` | `''` (proxy) | `cut-test` |
-| `environment.staging.ts` | `npm run build:staging` | `true` | API de staging | `''` |
-| `environment.production.ts` | `npm run build` / `build:production` | `true` | API de staging (hoy) | `''` |
-| `environment.clasico.ts` | `npm run start:clasico` | `false` | `''` (proxy) | `cut-test` |
-| `environment.minimal.ts` | `npm run start:minimal` | `false` | `''` (proxy) | `cut-test` |
+| Archivo | Cuándo | `production` | `apiUrl` | `devSubdomain` | `version` |
+|---|---|---|---|---|---|
+| `environment.ts` | `npm start`, `start:staging`, tests | `false` | `''` (proxy) | `cut-test` | `dev` |
+| `environment.staging.ts` | `npm run build:staging` | `true` | API de staging | `''` | `staging` |
+| `environment.production.ts` | `npm run build` / `build:production` | `true` | API de staging (hoy) | `''` | **`YYYY-MM-DD.N`** |
+| `environment.clasico.ts` | `npm run start:clasico` | `false` | `''` (proxy) | `cut-test` | `dev` |
+| `environment.minimal.ts` | `npm run start:minimal` | `false` | `''` (proxy) | `cut-test` | `dev` |
 
 **`environment.staging.ts` y `environment.production.ts` son dos archivos a propósito, aunque hoy
 tengan el mismo `apiUrl`.** El backend no tiene todavía un API de producción real
@@ -68,6 +68,24 @@ URL en un archivo que ya existe y no una migración de configuración. Mientras 
 
 `themeKey` es el cuarto campo y está **tipado contra el catálogo de temas**: un valor mal escrito rompe
 el build en vez de caer en silencio en un tema por defecto.
+
+### `version`: bumpearla es la mitad del despliegue
+
+`main.ts` la imprime en consola al arrancar (`console.log('version', …)`), antes del bootstrap. **Es la
+única forma de saber desde fuera qué código está publicado.**
+
+**Todo push a `master` sube `version` en `environment.production.ts`, en el mismo commit** — N+1 el
+mismo día, `.1` en día nuevo. En el mismo commit y no después, porque el push es lo que dispara el
+build de Netlify: un bump posterior describe un bundle que ya se publicó sin él.
+
+Se añadió el 2026-09-04 y llegó tarde: este repo era el único de los tres frontends sin marcador, así
+que confirmar un despliegue era descargar el `main-*.js`, sacar sus `chunk-*.js` y buscar a ojo una
+cadena del cambio. Eso responde *"¿está mi cambio?"* y no responde *"¿llegó el push o el build falló
+en silencio?"*, que es la pregunta que importa — y que ya hizo falta dos veces (ver `CLAUDE.md` raíz).
+
+El campo es obligatorio en `AppEnvironment`, mismo criterio que `themeKey`: un build al que se le
+olvide **no compila**, en vez de publicar un bundle anónimo. Los builds locales llevan `dev` y
+`staging`, que dicen justo lo que hay que saber: esto no salió de Netlify.
 
 Los dos últimos archivos existen **solo para comparar temas en local**: son copias del de desarrollo con
 otro `themeKey`, servidas en puertos distintos para poder tener los tres abiertos a la vez. Sus tres

@@ -9,4 +9,5 @@ export const environment: AppEnvironment = {
   apiUrl: '',
   themeKey: 'minimal',
   devSubdomain: 'cut-test',
+  version: 'dev',
 };
