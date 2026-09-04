@@ -20,11 +20,16 @@ export class BookingService {
   /**
    * El servicio importa en la consulta, no solo el barbero: el solape se calcula con su duración, así
    * que la misma hora puede estar libre para un corte y ocupada para un corte + barba.
+   *
+   * `barberId` **nulo** es "cualquier profesional" (RF-CP01 §4.1, serie 031): el parámetro se omite y
+   * el backend devuelve la unión de las horas de todos los que prestan el servicio, con la misma
+   * forma de respuesta. Se omite en vez de mandarse vacío porque `?barberId=` sería un GUID inválido,
+   * no una ausencia.
    */
-  getAvailability(barberId: string, serviceId: string, date: string): Promise<AvailabilityResponse> {
+  getAvailability(barberId: string | null, serviceId: string, date: string): Promise<AvailabilityResponse> {
     return firstValueFrom(
       this.http.get<AvailabilityResponse>('/api/v1/public/availability', {
-        params: { barberId, serviceId, date },
+        params: barberId ? { barberId, serviceId, date } : { serviceId, date },
       }),
     );
   }

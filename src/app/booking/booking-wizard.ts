@@ -23,10 +23,17 @@ import { planForBookingError } from './booking-errors';
 /**
  * Wizard de reserva en cuatro pasos dentro de un diálogo modal (RF-G04).
  *
- * **El paso 2 no ofrece "cualquier barbero"** y no puede ofrecerlo (decisión 7 de la serie): `BarberId`
- * es `Guid` no nullable en `CreateAppointmentRequest` y `barberId` es obligatorio en `/availability`.
- * Resolverlo en el cliente serían N peticiones por cambio de día, con N cold starts posibles — el
- * problema exacto que RF-O11 midió y eliminó. El mockup lo mostraba como una tarjeta más: no se sigue.
+ * ~~**El paso 2 no ofrece "cualquier barbero"** y no puede ofrecerlo (decisión 7 de la serie):
+ * `BarberId` es `Guid` no nullable en `CreateAppointmentRequest` y `barberId` es obligatorio en
+ * `/availability`. Resolverlo en el cliente serían N peticiones por cambio de día, con N cold starts
+ * posibles — el problema exacto que RF-O11 midió y eliminó. El mockup lo mostraba como una tarjeta
+ * más: no se sigue.~~
+ *
+ * **Refutado por RF-CP01 (serie 031), 2026-09-04.** El párrafo tachado era correcto en lo que decía y
+ * se conserva: resolverlo *en el cliente* sigue siendo mala idea por exactamente esos motivos. Lo que
+ * cambió es que ya no hace falta — el backend admite `barberId` ausente y devuelve la unión de las
+ * horas de todos los que prestan el servicio, en **una** petición. Aquí "cualquiera" no es un barbero
+ * ficticio ni un bucle: es no mandar el parámetro.
  */
 @Component({
   selector: 'cob-booking-wizard',
@@ -66,6 +73,26 @@ export class BookingWizard {
 
   protected readonly service = signal<PublicService | null>(null);
   protected readonly barber = signal<PublicBarber | null>(null);
+
+  /**
+   * "Cualquier profesional" elegido en el paso 2 (RF-CP01, serie 031).
+   *
+   * Es una señal aparte y **no** un valor centinela dentro de `barber`: un `PublicBarber` falso con
+   * id vacío se colaría en el `barberIds.includes(...)` de los filtros y en la petición de creación,
+   * y el fallo aparecería lejos de aquí. Con dos señales, `barber() === null && anyBarber()` es un
+   * estado que el compilador obliga a considerar en cada sitio que lea el barbero.
+   */
+  protected readonly anyBarber = signal(false);
+
+  /** El paso 2 está resuelto tanto con un barbero concreto como con "cualquiera". */
+  protected readonly barberChosen = computed(() => this.barber() !== null || this.anyBarber());
+
+  /**
+   * La tarjeta "cualquier profesional" solo aparece con **dos o más** profesionales
+   * (RF-CP01 decisión 5): con uno solo, "cualquiera" y su nombre son la misma reserva contada dos
+   * veces, y quien elige "cualquiera" pierde gratis el dato de con quién va.
+   */
+  protected readonly showAnyBarberOption = computed(() => this.visibleBarbers().length > 1);
   protected readonly date = signal(todayInBusinessZone());
   protected readonly time = signal<string | null>(null);
 
@@ -156,20 +183,33 @@ export class BookingWizard {
     // paso 2. Sin esto, cambiar de servicio con un barbero ya seleccionado saltaría directo al paso 3
     // con una pareja que el backend rechaza — el cliente vería el error después de elegir la hora, en
     // vez de simplemente no poder formar esa combinación.
+    //
+    // "Cualquiera" sobrevive siempre al cambio de servicio (RF-CP01 §8): es válido para todo servicio
+    // que el catálogo llegue a listar, porque el catálogo ya esconde los que no presta nadie.
     const chosenBarber = this.barber();
     if (chosenBarber && !service.barberIds.includes(chosenBarber.id)) {
       this.barber.set(null);
     }
 
-    this.step.set(this.barber() ? 3 : 2);
+    this.step.set(this.barberChosen() ? 3 : 2);
 
-    if (this.barber()) {
+    if (this.barberChosen()) {
       void this.loadAvailability();
     }
   }
 
   protected chooseBarber(barber: PublicBarber): void {
     this.barber.set(barber);
+    this.anyBarber.set(false);
+    this.clearTime();
+    this.step.set(3);
+    void this.loadAvailability();
+  }
+
+  /** "Cualquier profesional": se descarta el barbero concreto y se pide la disponibilidad conjunta. */
+  protected chooseAnyBarber(): void {
+    this.barber.set(null);
+    this.anyBarber.set(true);
     this.clearTime();
     this.step.set(3);
     void this.loadAvailability();
@@ -204,7 +244,7 @@ export class BookingWizard {
     const barber = this.barber();
     const time = this.time();
 
-    if (!service || !barber || !time) {
+    if (!service || !this.barberChosen() || !time) {
       return;
     }
 
@@ -223,7 +263,9 @@ export class BookingWizard {
 
     try {
       const created = await this.booking.createAppointment({
-        barberId: barber.id,
+        // RF-CP01 §4.2: nulo = "cualquier profesional". Quién quedó asignado llega de vuelta en
+        // `created.barberName`, que es lo que pinta la pantalla de éxito.
+        barberId: barber?.id ?? null,
         serviceId: service.id,
         date: this.date(),
         startTime: time,
@@ -285,7 +327,7 @@ export class BookingWizard {
     const service = this.service();
     const barber = this.barber();
 
-    if (!service || !barber) {
+    if (!service || !this.barberChosen()) {
       return;
     }
 
@@ -293,7 +335,7 @@ export class BookingWizard {
     this.slotsFailed.set(false);
 
     try {
-      const response = await this.booking.getAvailability(barber.id, service.id, this.date());
+      const response = await this.booking.getAvailability(barber?.id ?? null, service.id, this.date());
       this.slots.set(flattenSlots(response));
     } catch {
       this.slots.set([]);
@@ -307,7 +349,7 @@ export class BookingWizard {
     if (!this.service()) {
       return 1;
     }
-    if (!this.barber()) {
+    if (!this.barberChosen()) {
       return 2;
     }
     return this.time() ? 4 : 3;
@@ -321,6 +363,7 @@ export class BookingWizard {
     this.step.set(1);
     this.service.set(null);
     this.barber.set(null);
+    this.anyBarber.set(false);
     this.date.set(todayInBusinessZone());
     this.days.set(bookingWindow());
     this.time.set(null);

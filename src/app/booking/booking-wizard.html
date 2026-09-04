@@ -80,6 +80,26 @@
               <p-message severity="info" [text]="service() ? 'Ningún profesional presta este servicio ahora mismo. Elige otro servicio.' : 'Este negocio todavía no publicó profesionales.'" />
             } @else {
               <div class="options">
+                <!--
+                  RF-CP01 §8 (serie 031): primera opción, y solo con dos o más profesionales. El texto
+                  NO copia el del mockup de referencia ("Wanda te asigna al primero disponible"): aquí
+                  no hay ninguna Wanda, y "el primero disponible" además sería falso — la asignación es
+                  al azar entre quienes tengan libre la hora elegida (RN-05).
+                -->
+                @if (showAnyBarberOption()) {
+                  <button
+                    type="button"
+                    class="option"
+                    [class.option--active]="anyBarber()"
+                    (click)="chooseAnyBarber()"
+                  >
+                    <span class="option__glyph" aria-hidden="true"><i class="pi pi-sparkles"></i></span>
+                    <span class="option__text">
+                      <strong>Cualquier profesional</strong>
+                      <span class="cob-muted">Te asignamos uno de los disponibles</span>
+                    </span>
+                  </button>
+                }
                 @for (option of visibleBarbers(); track option.id) {
                   <button
                     type="button"
@@ -214,6 +234,8 @@
                   }
                   @if (barber(); as chosen) {
                     <div><dt class="cob-muted">Profesional</dt><dd>{{ barberName(chosen) }}</dd></div>
+                  } @else if (anyBarber()) {
+                    <div><dt class="cob-muted">Profesional</dt><dd>Cualquier profesional</dd></div>
                   }
                   <div><dt class="cob-muted">Fecha</dt><dd>{{ formatDate(date()) }}</dd></div>
                   @if (time(); as chosen) {

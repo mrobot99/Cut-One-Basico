@@ -43,6 +43,22 @@
   flex: none;
 }
 
+/*
+  RF-CP01 §8: la tarjeta "cualquier profesional" ocupa el sitio de una foto con un glifo, para que la
+  rejilla no se desalinee. Mismo tamaño exacto que `.option__avatar`.
+*/
+.option__glyph {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  flex: none;
+  color: var(--cob-accent);
+  font-size: 1.25rem;
+  background: color-mix(in srgb, var(--cob-accent) 14%, transparent);
+}
+
 .option__text {
   display: flex;
   flex-direction: column;

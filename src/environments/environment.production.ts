@@ -23,5 +23,5 @@ export const environment: AppEnvironment = {
   apiUrl: 'https://1w1n64683b.execute-api.us-east-1.amazonaws.com',
   themeKey: 'clasico',
   devSubdomain: '',
-  version: '2026-09-04.1',
+  version: '2026-09-04.2',
 };

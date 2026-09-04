@@ -88,7 +88,11 @@ export interface AvailabilityResponse {
 }
 
 export interface CreateAppointmentInput {
-  barberId: string;
+  /**
+   * `null` es "cualquier profesional" (RF-CP01, serie 031): el backend elige entre los que prestan el
+   * servicio y tienen esa hora libre, y devuelve el nombre del asignado en `barberName`.
+   */
+  barberId: string | null;
   serviceId: string;
   /** `"yyyy-MM-dd"`. */
   date: string;
