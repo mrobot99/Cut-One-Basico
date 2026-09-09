@@ -42,9 +42,28 @@
   </style>
   <script>
     (function () {
-      var MIN = 450, start = Date.now(), done = false;
+      var MIN = 500, start = Date.now(), done = false, root, obs, poll;
+      // El shell del framework monta casi vacío (alto ~0) y solo DESPUÉS pinta el
+      // contenido real, muchas veces tras un fetch a la API. Si retiramos el splash
+      // en la primera mutación (shell montado) queda un hueco de fondo oscuro hasta
+      // que llegan los datos. Por eso esperamos a que el root tenga ALTURA visible.
+      function contentReady() {
+        if (!root) return false;
+        var kids = root.children, max = 0, i, h;
+        for (i = 0; i < kids.length; i++) {
+          h = kids[i].getBoundingClientRect().height;
+          if (h > max) max = h;
+        }
+        if (!max) max = root.getBoundingClientRect().height;
+        return max > 120;
+      }
+      function cleanup() {
+        if (obs) { obs.disconnect(); obs = null; }
+        if (poll) { clearInterval(poll); poll = null; }
+      }
       function hide() {
         if (done) return; done = true;
+        cleanup();
         var el = document.getElementById('cutone-splash');
         if (!el) return;
         var wait = Math.max(0, MIN - (Date.now() - start));
@@ -53,14 +72,16 @@
           setTimeout(function () { if (el && el.parentNode) el.parentNode.removeChild(el); }, 500);
         }, wait);
       }
+      function maybeHide() { if (contentReady()) { hide(); return true; } return false; }
       window.__hideCutOneSplash = hide;
       try {
-        var root = document.querySelector('cob-root');
-        if (root) {
-          var obs = new MutationObserver(function () {
-            if (root.children.length > 0 || (root.textContent || '').trim().length > 0) { obs.disconnect(); hide(); }
-          });
+        root = document.querySelector('cob-root');
+        if (root && !maybeHide()) {
+          obs = new MutationObserver(maybeHide);
           obs.observe(root, { childList: true, subtree: true });
+          // Respaldo: el contenido puede crecer por un reflow tras cargar datos sin
+          // una mutación que el observer capte, así que también sondeamos.
+          poll = setInterval(maybeHide, 120);
         }
       } catch (e) {}
       setTimeout(hide, 10000);
