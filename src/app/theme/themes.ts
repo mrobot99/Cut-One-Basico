@@ -7,7 +7,7 @@ import Aura from '@primeuix/themes/aura';
 
 /**
  * Paletas primitivas disponibles como acento o superficie. Todas menos `gold` son las que Aura trae
- * de fábrica; `gold` es el dorado de marca de Cut One (el mismo `#c9a24b` del "One" del splash), una
+ * de fábrica; `gold` es el dorado de marca de Cut One Basic (`#c8a96d`), una
  * rampa propia que `buildPreset` inyecta como valores literales en el acento. Se
  * listan a mano para que `PaletteName` sea un tipo cerrado: una paleta mal escrita en un descriptor
  * tiene que romper el build, no resolverse a `undefined` y pintar tokens vacíos.
@@ -58,7 +58,7 @@ export interface ThemeDescriptor {
 export const THEMES = {
   /** El del mockup: oscuro, monocromo, acento frío. */
   noche: { primary: 'slate', surface: 'zinc', colorScheme: 'dark' },
-  /** Barbería tradicional: cálido, dorado de marca (#c9a24b) sobre piedra. */
+  /** Barbería tradicional: cálido, dorado de marca (#c8a96d) sobre piedra. */
   clasico: { primary: 'gold', surface: 'stone', colorScheme: 'dark' },
   /** Claro, un solo acento. */
   minimal: { primary: 'emerald', surface: 'slate', colorScheme: 'light' },
@@ -84,26 +84,26 @@ export const DARK_MODE_SELECTOR = `.${DARK_MODE_CLASS}`;
 const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
 
 /**
- * Rampa del dorado de marca de Cut One. El `400` es `#c9a24b` — el mismo dorado del "One" del splash
- * y el que PZ usa como acento — porque en modo oscuro Aura toma `primary.400` como color principal
- * (y `300`/`200` como hover/active), que es justo el caso del tema `clasico`. El resto de la rampa
- * son gradaciones de ese mismo tono para que superficies claras y estados de texto sigan leyéndose
- * como oro y no como marrón. No viene de Aura: `buildPreset` la inyecta como valores literales en
- * `semantic.primary` cuando el tema pide `gold` (no se puede referenciar como `{gold.N}` porque no es
- * una primitiva registrada de Aura).
+ * Rampa del dorado de marca del basic. El `400` es `#c8a96d` — el dorado elegido para Cut One Basic
+ * (un oro más claro y suave; NO es el `#c9a24b` del splash, es una decisión propia del basic) — porque
+ * en modo oscuro Aura toma `primary.400` como color principal (y `300`/`200` como hover/active), que
+ * es justo el caso del tema `clasico`. El resto de la rampa son gradaciones de ese mismo tono para que
+ * superficies claras y estados de texto sigan leyéndose como oro y no como marrón. No viene de Aura:
+ * `buildPreset` la inyecta como valores literales en `semantic.primary` cuando el tema pide `gold` (no
+ * se puede referenciar como `{gold.N}` porque no es una primitiva registrada de Aura).
  */
 const GOLD = {
-  50: '#fbf6e9',
-  100: '#f6ebc9',
-  200: '#ecd79a',
-  300: '#dcbd6f',
-  400: '#c9a24b',
-  500: '#b88f3a',
-  600: '#9c7530',
-  700: '#7d5c28',
-  800: '#654b24',
-  900: '#563f21',
-  950: '#322310',
+  50: '#faf6ec',
+  100: '#f4ebd4',
+  200: '#e8d5aa',
+  300: '#d9be89',
+  400: '#c8a96d',
+  500: '#b8955a',
+  600: '#9c7c46',
+  700: '#7d6238',
+  800: '#654f30',
+  900: '#56432b',
+  950: '#322515',
 } as const satisfies Record<(typeof SHADES)[number], string>;
 
 /**
