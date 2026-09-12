@@ -342,8 +342,11 @@ export class ManageBookingPage {
   protected openCancelPanel(): void {
     this.cancelOpen.set(true);
     this.cancelError.set(null);
-    // En el siguiente frame: con OnPush el bloque todavía no está en el DOM cuando esto se ejecuta.
-    requestAnimationFrame(() => {
+    // `setTimeout` y no `requestAnimationFrame`: con OnPush el bloque `@if` todavía no está en el DOM
+    // cuando esto se ejecuta, y un rAF lanzado aquí puede correr ANTES de la detección de cambios y
+    // encontrar el viewChild vacío. Medido en la otra landing el 2026-09-12: el panel se abría fuera
+    // de pantalla y la página se quedaba arriba. Una macrotarea corre después del renderizado.
+    setTimeout(() => {
       this.cancelPanel()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   }
