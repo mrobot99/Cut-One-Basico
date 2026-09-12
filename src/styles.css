@@ -168,3 +168,47 @@ p {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* ===============================================================================================
+   Safari / iPhone. Mismo tratamiento que se le dio al panel el 2026-09-12, adaptado a esta landing.
+   =============================================================================================== */
+
+/* --- El zoom automático de iOS al enfocar un campo ---------------------------------------------
+
+   Safari en iPhone AMPLÍA el viewport entero cuando se enfoca un `<input>`, `<textarea>` o `<select>`
+   cuyo `font-size` calculado es menor de 16px. No es configurable y no hay evento que avise: la
+   página se queda ampliada y el contenido se sale por los lados.
+
+   Aquí ninguna regla del repo baja de 16px — el que lo hace es PrimeNG, que trae
+   `--p-form-field-font-size: 0.875rem` (14px) por defecto. Basta con eso: cada campo del wizard de
+   reserva amplía la pantalla al tocarlo, justo en el momento en que un cliente está escribiendo su
+   nombre y su teléfono. A diferencia del panel, aquí NO se bloquea el pinch-zoom, así que el
+   visitante puede volver a alejar con los dedos; el problema es que tiene que hacerlo en cada campo.
+
+   16px es el umbral exacto de Safari, no una preferencia estética: a 15.9px amplía y a 16px no.
+
+   `hover: none` además de `pointer: coarse` para no alcanzar a los portátiles táctiles, que tienen
+   ratón y no amplían nada. En escritorio este bloque no existe.
+
+   El `:root` repetido sube la especificidad por encima de las reglas de PrimeNG, que se inyectan en
+   un `<style>` en tiempo de ejecución —o sea DESPUÉS de esta hoja global— y con la misma
+   especificidad ganarían por orden de fuente. Es el mismo recurso que usa el panel. */
+@media (hover: none) and (pointer: coarse) {
+  :root:root:root:root
+    :is(input, textarea, select):not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='range'],
+      [type='color'],
+      [type='file']
+    ) {
+    font-size: 16px !important;
+  }
+
+  /* El `p-select` de PrimeNG no es un `<select>` nativo —es un div, y por eso no dispara el zoom—,
+     pero se apila junto a los inputs en el mismo formulario, y dejarlo más pequeño se lee como un
+     fallo de maquetación. */
+  :root:root:root:root :is(.p-select-label, .p-multiselect-label, .p-autocomplete-input) {
+    font-size: 16px !important;
+  }
+}

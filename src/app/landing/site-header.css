@@ -2,8 +2,18 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  /* Las dos líneas de `background` son un respaldo, no un descuido: `color-mix()` es Safari 16.2+, y
+     esta cabecera es pegajosa — si la declaración se cae, el contenido de la página pasa por debajo
+     del logo y del botón de reservar, y deja de leerse. Con la primera línea el peor caso es una
+     cabecera opaca en vez de translúcida, que es una pérdida puramente estética. Este truco funciona
+     aquí porque `background` es una propiedad real; con las variables `--cob-*` de `styles.css` NO
+     funcionaría (ver `core/light-dark-fallback.ts`, que existe justo por eso). */
+  background: var(--cob-page-bg);
   background: color-mix(in srgb, var(--cob-page-bg) 88%, transparent);
   backdrop-filter: blur(10px);
+  /* Safari no soporta `backdrop-filter` sin prefijo hasta la 18, y autoprefixer no lo añade
+     (comprobado sobre el bundle publicado del panel el 2026-09-12: cero ocurrencias del prefijo). */
+  -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--cob-border);
 }
 
