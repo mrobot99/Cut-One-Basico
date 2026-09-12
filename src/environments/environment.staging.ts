@@ -9,7 +9,7 @@ import type { AppEnvironment } from './environment.model';
  */
 export const environment: AppEnvironment = {
   production: true,
-  apiUrl: 'https://1w1n64683b.execute-api.us-east-1.amazonaws.com',
+  apiUrl: 'https://api-gateway.cutoneai.com',
   themeKey: 'noche',
   devSubdomain: '',
   // Nadie despliega esta configuración: Netlify observa `master` y construye con `production`. La

@@ -20,8 +20,8 @@ import type { AppEnvironment } from './environment.model';
  */
 export const environment: AppEnvironment = {
   production: true,
-  apiUrl: 'https://1w1n64683b.execute-api.us-east-1.amazonaws.com',
+  apiUrl: 'https://api-gateway.cutoneai.com',
   themeKey: 'clasico',
   devSubdomain: '',
-  version: '2026-09-09.4',
+  version: '2026-09-11.1',
 };
