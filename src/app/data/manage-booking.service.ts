@@ -60,6 +60,25 @@ export class ManageBookingService {
     );
   }
 
+  /**
+   * Cancela la cita a petición del cliente (RF-CC01 §4, 041-rfs-cancelar-cita-desde-el-correo). Es
+   * idempotente: cancelar una ya cancelada devuelve 200 con su estado, no un error.
+   *
+   * **Solo se llama desde un handler de click.** El `?cancelar=1` del correo no la dispara: solo abre
+   * el panel de confirmación. Ver el comentario de `load()` en `manage-booking-page.ts`.
+   *
+   * El cuerpo va siempre, aunque `reason` sea null: el endpoint espera un DTO, y un POST sin cuerpo
+   * no lo bindea. Es la diferencia con `confirm()`, que va con `null` porque no lleva DTO.
+   */
+  cancel(appointmentId: string, reason: string | null): Promise<ManageAppointment> {
+    return firstValueFrom(
+      this.http.post<ManageAppointment>(
+        `/api/v1/public/appointments/${appointmentId}/cancel`,
+        { reason },
+      ),
+    );
+  }
+
   reschedule(appointmentId: string, input: RescheduleInput): Promise<ManageAppointment> {
     return firstValueFrom(
       this.http.put<ManageAppointment>(

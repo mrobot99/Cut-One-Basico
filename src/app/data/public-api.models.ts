@@ -171,6 +171,14 @@ export interface ManageAppointment {
   confirmable: boolean;
   /** Motivo redactado de por qué no se puede confirmar, o null si sí se puede o si ya lo está. */
   notConfirmableReason: string | null;
+  /**
+   * RF-CC01 (041-rfs-cancelar-cita-desde-el-correo): si la cita está viva y todavía no empezó, así
+   * que el cliente puede cancelarla. Es `false` también cuando ya está cancelada — ese caso se
+   * distingue por `status`.
+   */
+  cancelable: boolean;
+  /** Motivo redactado de por qué no se puede cancelar, o null si sí se puede o si ya lo está. */
+  notCancelableReason: string | null;
 }
 
 export interface RescheduleInput {

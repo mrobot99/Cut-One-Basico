@@ -9,6 +9,7 @@ import {
   viewChild,
   type ElementRef,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { Message } from 'primeng/message';
@@ -38,7 +39,7 @@ type PageState = 'loading' | 'ready' | 'saved' | 'error';
  */
 @Component({
   selector: 'cob-manage-booking-page',
-  imports: [Button, Message, ProgressSpinner, Skeleton],
+  imports: [Button, Message, ProgressSpinner, RouterLink, Skeleton],
   templateUrl: './manage-booking-page.html',
   styleUrl: './manage-booking-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,6 +59,13 @@ export class ManageBookingPage {
    * es exactamente la de siempre.
    */
   readonly confirmar = input<string>();
+
+  /**
+   * `?cancelar=1` — lo trae el enlace "Cancelar mi cita" del correo (RF-CC01,
+   * 041-rfs-cancelar-cita-desde-el-correo). **Solo abre el panel de confirmación; nunca cancela.**
+   * Si llega junto a `?confirmar=1`, confirmar gana (RN-10): nunca lo destructivo por ambigüedad.
+   */
+  readonly cancelar = input<string>();
 
   protected readonly state = signal<PageState>('loading');
   protected readonly errorMessage = signal('');
@@ -84,6 +92,18 @@ export class ManageBookingPage {
   protected readonly confirming = signal(false);
   protected readonly justConfirmed = signal(false);
   protected readonly confirmError = signal<string | null>(null);
+
+  /**
+   * Cancelación (RF-CC01). `justCancelled` distingue "acabo de cancelarla" de "ya estaba cancelada",
+   * igual que `justConfirmed`. `cancelAttempted` es lo que hace visible el motivo de no-cancelable
+   * fuera del panel: a quien llegó por "Modificar mi reserva" no se le explica una acción que no pidió.
+   */
+  protected readonly cancelOpen = signal(false);
+  protected readonly cancelling = signal(false);
+  protected readonly cancelReason = signal('');
+  protected readonly cancelError = signal<string | null>(null);
+  protected readonly justCancelled = signal(false);
+  protected readonly cancelAttempted = signal(false);
 
   /** La ventana se calcula una vez: es la misma durante toda la sesión. */
   protected readonly days = signal(bookingWindow());
@@ -162,6 +182,9 @@ export class ManageBookingPage {
    */
   private readonly dayStrip = viewChild<ElementRef<HTMLElement>>('dayStrip');
   private dayCentered = false;
+
+  /** El panel de cancelación, para traerlo a la vista al abrirlo (RF-CC01, móvil). */
+  private readonly cancelPanel = viewChild<ElementRef<HTMLElement>>('cancelPanel');
 
   constructor() {
     this.catalog.ensureLoaded();
@@ -311,6 +334,80 @@ export class ManageBookingPage {
     }
   }
 
+  /**
+   * Abre el panel de cancelación y lo trae a la vista. El `scrollIntoView` no es cosmético: en un
+   * teléfono la pila de tarjetas es larga y el panel puede quedar fuera de pantalla, y entonces quien
+   * pulsó el enlace del correo creería que no pasó nada.
+   */
+  protected openCancelPanel(): void {
+    this.cancelOpen.set(true);
+    this.cancelError.set(null);
+    // En el siguiente frame: con OnPush el bloque todavía no está en el DOM cuando esto se ejecuta.
+    requestAnimationFrame(() => {
+      this.cancelPanel()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+
+  /** Cierra el panel sin tocar la cita. Es la salida segura, y es el botón que va primero. */
+  protected dismissCancelPanel(): void {
+    this.cancelOpen.set(false);
+    this.cancelError.set(null);
+  }
+
+  /**
+   * RF-CC01 §5: cancelar es idempotente en el backend, así que la pantalla no comprueba el estado
+   * antes de llamar — solo evita ofrecer el botón cuando no hay nada que cancelar.
+   *
+   * **Este método sale únicamente de un click humano.** Ver el comentario de `load()`.
+   */
+  protected async cancelBooking(): Promise<void> {
+    if (this.cancelling()) {
+      return;
+    }
+
+    this.cancelling.set(true);
+    this.cancelError.set(null);
+    this.cancelAttempted.set(true);
+
+    try {
+      const trimmed = this.cancelReason().trim();
+      this.appointment.set(
+        await this.manage.cancel(this.appointmentId(), trimmed.length > 0 ? trimmed : null),
+      );
+      this.justCancelled.set(true);
+      this.cancelOpen.set(false);
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'APPOINTMENT_NOT_CANCELABLE') {
+        // El estado cambió entre que se cargó la pantalla y el clic. Se refleja en la pantalla y sin
+        // ofrecer reintento: los dos motivos son definitivos. Igual que APPOINTMENT_NOT_EDITABLE.
+        const current = this.appointment();
+        if (current) {
+          this.appointment.set({
+            ...current,
+            cancelable: false,
+            notCancelableReason: error.message,
+          });
+        }
+        this.cancelOpen.set(false);
+      } else if (error instanceof ApiError && error.code === 'CONCURRENCY_CONFLICT') {
+        this.messages.add({
+          severity: 'error',
+          summary: this.summaryFor(error),
+          detail: error.message,
+          life: 8000,
+        });
+      } else {
+        this.cancelError.set(
+          error instanceof ApiError
+            ? error.message
+            : 'No pudimos cancelar tu cita. Revisa tu conexión e inténtalo de nuevo.',
+        );
+      }
+    } finally {
+      this.cancelling.set(false);
+    }
+  }
+
   /** Vuelve del "listo" al formulario, para encadenar otro cambio sin recargar la página. */
   protected editAgain(): void {
     this.syncSelectionFromAppointment();
@@ -409,6 +506,20 @@ export class ManageBookingPage {
       // exactamente una vez y sobre datos ya cargados.
       if (this.confirmar() === '1' && appointment.confirmable) {
         void this.confirmBooking();
+      }
+
+      // RF-CC01 §8: y esto es TODO lo que hace `?cancelar=1`. Abre el panel y nada más.
+      //
+      // La diferencia con las tres líneas de arriba es la garantía de la serie 041, no un descuido:
+      // confirmar se auto-dispara y RF-CN01 §8 aceptó el riesgo residual de que un escáner de correo
+      // que ejecute la SPA confirme la cita, porque el efecto es el estado que el negocio quiere.
+      // Cancelar es irreversible y no hay ningún flujo de "deshacer", así que el POST sale únicamente
+      // de un click humano sobre "Sí, cancelar mi cita". NO conviertas esto en `void this.cancelBooking()`
+      // "por simetría": es exactamente lo que la serie promete que no ocurre.
+      //
+      // RN-10: confirmar gana si llegan los dos parámetros.
+      if (this.cancelar() === '1' && this.confirmar() !== '1' && appointment.cancelable) {
+        this.openCancelPanel();
       }
     } catch (error) {
       this.errorMessage.set(this.messageFor(error));

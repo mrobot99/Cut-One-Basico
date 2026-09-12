@@ -78,6 +78,89 @@
           <p-message severity="info" [text]="message" />
         </section>
       }
+
+      <!-- RF-CC01 (041-rfs-cancelar-cita-desde-el-correo). Tres bloques excluyentes, con la misma
+           forma que los de confirmar: ya cancelada / el disparador / el panel abierto. -->
+      @if (booking.status === 'Cancelled') {
+        <section class="card card--center">
+          <i class="pi pi-times-circle card__icon" aria-hidden="true"></i>
+          <h2 class="card__title">
+            {{ justCancelled() ? 'Tu cita quedó cancelada' : 'Esta cita está cancelada' }}
+          </h2>
+          <p class="cob-muted">
+            {{
+              justCancelled()
+                ? 'Te enviamos la confirmación por correo. Cuando quieras volver, reserva de nuevo.'
+                : 'Si quieres venir, reserva una cita nueva.'
+            }}
+          </p>
+          <p-button label="Reservar otra cita" [text]="true" icon="pi pi-calendar-plus" routerLink="/" />
+        </section>
+      } @else if (booking.cancelable && !cancelOpen()) {
+        <section class="card card--center cancel-trigger">
+          <p class="cob-muted">¿Ya no puedes venir?</p>
+          <p-button
+            label="Cancelar mi cita"
+            [text]="true"
+            severity="danger"
+            (onClick)="openCancelPanel()"
+          />
+        </section>
+      } @else if (booking.cancelable && cancelOpen()) {
+        <section #cancelPanel class="card cancel-panel">
+          <h2 class="card__title">¿Cancelar tu cita?</h2>
+          <p class="cob-muted">
+            Si cancelas, tu cita se libera y <strong>no se puede deshacer</strong>. Si solo quieres
+            otro día u otra hora, usa «cambiar mi horario» de abajo.
+          </p>
+
+          <label class="cancel-panel__label" for="cancel-reason">Cuéntanos por qué (opcional)</label>
+          <!-- La clase fija 16px: por debajo de eso iOS Safari hace auto-zoom al enfocar. -->
+          <textarea
+            id="cancel-reason"
+            class="cancel-panel__reason"
+            rows="3"
+            maxlength="300"
+            [value]="cancelReason()"
+            (input)="cancelReason.set($any($event.target).value)"
+          ></textarea>
+
+          @if (cancelError(); as message) {
+            <p-message severity="error" [text]="message" />
+          }
+
+          <!-- Apilados en móvil y en fila desde 480px, con el seguro primero en los dos casos: dos
+               botones pegados en un teléfono, uno de ellos irreversible, se pulsan por error. -->
+          <div class="cancel-panel__actions">
+            <p-button
+              label="No, conservar mi cita"
+              [outlined]="true"
+              [disabled]="cancelling()"
+              (onClick)="dismissCancelPanel()"
+            />
+            <p-button
+              label="Sí, cancelar mi cita"
+              severity="danger"
+              [loading]="cancelling()"
+              (onClick)="cancelBooking()"
+            />
+          </div>
+        </section>
+      }
+
+      <!-- El motivo de por qué no se puede cancelar solo se pinta si el cliente venía a cancelar: por
+           el enlace del correo, o porque lo intentó y el backend lo rechazó. A quien llegó por
+           "Modificar mi reserva" no se le explica una acción que no pidió. -->
+      @if (
+        booking.status !== 'Cancelled' &&
+        !booking.cancelable &&
+        booking.notCancelableReason &&
+        (cancelar() === '1' || cancelAttempted())
+      ) {
+        <section class="card card--center">
+          <p-message severity="info" [text]="booking.notCancelableReason" />
+        </section>
+      }
     }
 
     @if (state() === 'saved') {
@@ -89,11 +172,16 @@
       </section>
     } @else if (!booking.editable) {
       <!-- El backend redacta el motivo y el frontend solo lo pinta: las dos landings habrían escrito
-           la misma frase dos veces, y dos copias de una regla de negocio divergen (§10.3 nota 1). -->
-      <section class="card card--center">
-        <i class="pi pi-info-circle card__icon" aria-hidden="true"></i>
-        <p-message severity="info" [text]="booking.notEditableReason || 'Esta cita ya no se puede modificar.'" />
-      </section>
+           la misma frase dos veces, y dos copias de una regla de negocio divergen (§10.3 nota 1).
+           La condición de la rama sigue siendo solo `!editable` —si se le añadiera el estado, una
+           cita cancelada caería al @else y pintaría el formulario de reprogramación—; lo que se
+           oculta es únicamente el mensaje, porque el bloque de RF-CC01 ya lo dijo más arriba. -->
+      @if (booking.status !== 'Cancelled') {
+        <section class="card card--center">
+          <i class="pi pi-info-circle card__icon" aria-hidden="true"></i>
+          <p-message severity="info" [text]="booking.notEditableReason || 'Esta cita ya no se puede modificar.'" />
+        </section>
+      }
     } @else {
       <section class="card">
         <h2 class="card__title">Servicio</h2>
